@@ -27,23 +27,22 @@ namespace GraphMat {
 
 class pr_t {
 public:
-  double delta;
-  double residual;
-  double pageRank;
+  static const uint32_t size = 8;
+  uint32_t degree;
+  float pageRank;
   pr_t() {
-    delta = 0.0;
-    residual = 1-ALPHA;
+    degree = 0;
     pageRank = 0.0;
   }
   friend std::ostream& operator<<(std::ostream& os, const pr_t& obj) {
-    os << obj.pageRank << "," << obj.delta << "," << obj.residual;
+    os << obj.pageRank;
     return os;
   }
   bool operator==(const pr_t& obj) const {
-    return this->delta == obj.delta && this->residual == obj.residual && this->pageRank == obj.pageRank;
+    return this->pageRank == obj.pageRank;
   }
   bool operator!=(const pr_t& obj) const {
-    return !(this->delta == obj.delta && this->residual == obj.residual && this->pageRank == obj.pageRank);
+    return !(this->pageRank == obj.pageRank);
   }
 };
 

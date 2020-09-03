@@ -19,7 +19,8 @@ namespace GraphMat {
 
 class cc_t {
 public:
-  uint64_t component;
+  static const uint32_t size = 4;
+  uint32_t component;
   cc_t() {
     component = ~0;
   }

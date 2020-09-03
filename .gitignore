@@ -13,3 +13,7 @@ src/trace
 src/output
 src/graphs
 src/modules/memory/DRAMSim2
+*.so
+src/test/
+src/exp/
+.vscode/

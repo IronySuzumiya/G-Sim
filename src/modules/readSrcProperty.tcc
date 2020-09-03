@@ -77,8 +77,9 @@ void SimObj::ReadSrcProperty<v_t, e_t>::tick() {
         // Dequeue from the work queue
         _data.vertex_id = _process->front();
         _process->pop_front();
-        _data.vertex_id_addr = _curr_addr;
+        //_data.vertex_id_addr = _curr_addr;
         //_data.vertex_id_addr = &_graph->vertex[_data.vertex_id];
+        _data.vertex_id_addr = _data.vertex_id * _graph->vertex[_data.vertex_id].property.size;
         _data.vertex_data = _graph->vertex[_data.vertex_id].property;
 #ifdef MODULE_TRACE
         mem_result_curr = _data.vertex_data;
@@ -95,7 +96,8 @@ void SimObj::ReadSrcProperty<v_t, e_t>::tick() {
         }
 
         _mem_flag = false;
-        _dram->read(_curr_addr, &_mem_flag);
+        //_dram->read(_curr_addr, &_mem_flag);
+        _dram->read(_data.vertex_id_addr, &_mem_flag);
         _stall = STALL_MEM;
         next_state = OP_MEM_WAIT;
       }

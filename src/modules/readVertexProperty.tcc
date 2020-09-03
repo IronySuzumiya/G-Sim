@@ -80,7 +80,8 @@ void SimObj::ReadVertexProperty<v_t, e_t>::tick(void) {
       if(_ready && !_apply->empty()) {
         // Dequeue from the apply work queue
         _data.vertex_id = _apply->front();
-        _data.vertex_id_addr = (uint64_t)((void*)(&_graph->vertex[_data.vertex_id]));
+        //_data.vertex_id_addr = (uint64_t)((void*)(&_graph->vertex[_data.vertex_id]));
+        _data.vertex_id_addr = _data.vertex_id * _graph->vertex[_data.vertex_id].property.size;
         _apply->pop_front();
         _data.last_edge = false;
         _data.last_vertex = false;
@@ -97,7 +98,7 @@ void SimObj::ReadVertexProperty<v_t, e_t>::tick(void) {
         mem_result_curr = _data.vertex_data;
 #endif
         _mem_flag = false;
-        _dram->read(_curr_addr, &_mem_flag);
+        _dram->read(_data.vertex_id_addr, &_mem_flag);
         _stall = STALL_MEM;
         next_state = OP_MEM_WAIT;
       }

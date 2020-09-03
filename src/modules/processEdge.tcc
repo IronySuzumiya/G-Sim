@@ -41,6 +41,11 @@ SimObj::ProcessEdge<v_t, e_t>::~ProcessEdge() {
 }
 
 template<class v_t, class e_t>
+SimObj::stall_t SimObj::ProcessEdge<v_t, e_t>::is_stalled(void) {
+  return stall_t((bool)_stall || _has_work);
+}
+
+template<class v_t, class e_t>
 void SimObj::ProcessEdge<v_t, e_t>::tick(void) {
   _tick++;
   op_t next_state = _state;
@@ -61,6 +66,7 @@ void SimObj::ProcessEdge<v_t, e_t>::tick(void) {
         _counter = 0;
         next_state = OP_COUNT;
         _stall = STALL_PROCESSING;
+        _items_processed++;
       }
       else {
         // Wait for upstream to send vertex

@@ -45,6 +45,7 @@ private:
   using Module<v_t, e_t>::_data;
   using Module<v_t, e_t>::_name;
   using Module<v_t, e_t>::_has_work;
+  using Module<v_t, e_t>::_items_processed;
 #if MODULE_TRACE
   using Module<v_t, e_t>::_in_data;
   using Module<v_t, e_t>::_in_logger;

@@ -58,7 +58,7 @@ template<class v_t, class e_t>
 void SimObj::Module<v_t, e_t>::ready(void) {
   _ready = true;
   _has_work = true;
-  _items_processed++;
+  //_items_processed++;
 }
 
 template<class v_t, class e_t>
@@ -70,7 +70,12 @@ void SimObj::Module<v_t, e_t>::ready(Utility::pipeline_data<v_t, e_t> data) {
 #endif
   _ready = true;
   _has_work = true;
-  _items_processed++;
+  //_items_processed++;
+}
+
+template<class v_t, class e_t>
+void SimObj::Module<v_t, e_t>::dispatch(Utility::pipeline_data<v_t, e_t> data, uint64_t id) {
+  assert(false);
 }
 
 template<class v_t, class e_t>

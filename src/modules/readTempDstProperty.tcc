@@ -74,6 +74,7 @@ void SimObj::ReadTempDstProperty<v_t, e_t>::tick(void) {
         }
         _stall = STALL_MEM;
         next_state = OP_MEM_WAIT;
+        _items_processed++;
       }
       else {
         // Wait for upstream to send vertex

@@ -81,6 +81,7 @@ void SimObj::WriteTempDstProperty<v_t, e_t>::tick(void) {
         _curr_addr += 4;
         _stall = STALL_MEM;
         next_state = OP_MEM_WAIT;
+        _items_processed++;
       }
       else {
         // Wait for upstream to send _edge
@@ -96,7 +97,11 @@ void SimObj::WriteTempDstProperty<v_t, e_t>::tick(void) {
 #ifdef MODULE_TRACE
         mem_out_curr = _data.vertex_temp_dst_data;
 #endif
-        _apply->push_back(_data.vertex_dst_id);
+
+//#ifndef APP_PR
+      _apply->push_back(_data.vertex_dst_id);
+//#endif
+        
         _edges_written++;
         Utility::pipeline_data<v_t, e_t> temp_data = _cau->signal();
         assert(temp_data.vertex_id == _data.vertex_id);
@@ -129,6 +134,7 @@ void SimObj::WriteTempDstProperty<v_t, e_t>::tick(void) {
 }
 
 
+#if 0
 template<class v_t, class e_t>
 void SimObj::WriteTempDstProperty<v_t, e_t>::print_stats(void) {
   sim_out.write("-------------------------------------------------------------------------------\n");
@@ -140,7 +146,6 @@ void SimObj::WriteTempDstProperty<v_t, e_t>::print_stats(void) {
   sim_out.write("    STALL_MEM:        " + std::to_string(_stall_ticks[STALL_MEM]) + " cycles\n");
   sim_out.write("  Performance:\n");
   sim_out.write("    Edges:            " + std::to_string(_edges_written) + "\n");
-  sim_out.write("    Cycles:           " + std::to_string(_tick) + "\n");
 }
 
 
@@ -151,9 +156,9 @@ void SimObj::WriteTempDstProperty<v_t, e_t>::print_stats_csv(void) {
     + std::to_string(_stall_ticks[STALL_PROCESSING]) + ","
     + std::to_string(_stall_ticks[STALL_PIPE]) + ","
     + std::to_string(_stall_ticks[STALL_MEM]) + ","
-    + std::to_string(_edges_written) + ","
-    + std::to_string(_tick) + "\n");
+    + std::to_string(_edges_written) + "\n");
 }
+#endif
 
 
 #ifdef MODULE_TRACE

@@ -80,17 +80,21 @@ void SimObj::Cache::tick(void) {
       }
     }
   }
-  for(auto it = mshr.begin(); it != mshr.end(); it++) {
+  for(auto it = mshr.begin(); it != mshr.end(); ) {
     if(it->complete) {
       it = mshr.erase(it);
+    } else {
+      it++;
     }
   }
   // Complete any outstanding requests:
-  for(auto it = outstanding_sequential_reads.begin(); it != outstanding_sequential_reads.end(); it++) {
+  for(auto it = outstanding_sequential_reads.begin(); it != outstanding_sequential_reads.end(); ) {
     if(hit(it->first) < cache.size()) {
       cache[hit(it->first)].access(false);
       *(it->second) = true;
       it = outstanding_sequential_reads.erase(it);
+    } else {
+      it++;
     }
   }
   // Tick all the cache lines
@@ -153,12 +157,22 @@ void SimObj::Cache::read(uint64_t addr, bool* complete, bool sequential) {
     else {
       stats[MISS]++;
       mshr_t req;
-      req.address = addr;
+      //req.address = addr;
+      req.address = (addr & ~ACCESS_MASK);
       req.write = false;
       req.complete = false;
       req.prefetch = false;
-      mshr.push_front(req);
-      _memory->read(mshr.front().address, &mshr.front().complete, false);
+      bool is_dup_read = false;
+      for (auto it : mshr) {
+        if(it.address == req.address) {
+          is_dup_read = true;
+          break;
+        }
+      }
+      if(!is_dup_read) {
+        mshr.push_front(req);
+        _memory->read(mshr.front().address, &mshr.front().complete, false);
+      }
       outstanding_sequential_reads.push_back(std::make_pair(addr, complete));
     }
   }
@@ -170,11 +184,21 @@ void SimObj::Cache::read(uint64_t addr, bool* complete, bool sequential) {
 
 
 void SimObj::Cache::print_stats() {
-  SimObj::sim_out.write("Cache,");
+  sim_out.write("-------------------------------------------------------------------------------\n");
+  sim_out.write("[ Cache ]\n");
+  sim_out.write("  HIT:              " + std::to_string(stats[HIT]) + "\n");
+  sim_out.write("  MISS:             " + std::to_string(stats[MISS]) + "\n");
+  sim_out.write("  SEQ READ:         " + std::to_string(stats[SEQ_READ]) + "\n");
+  sim_out.write("  SEQ WRITE:        " + std::to_string(stats[SEQ_WRITE]) + "\n");
+  sim_out.write("  RAND READ:        " + std::to_string(stats[RAND_READ]) + "\n");
+  sim_out.write("  RAND WRITE:       " + std::to_string(stats[RAND_WRITE]) + "\n");
+  sim_out.write("  PREFETCH:         " + std::to_string(stats[PREFETCH]) + "\n");
+  sim_out.write("  WRITEBACK:        " + std::to_string(stats[WRITEBACK]) + "\n");
+  /*SimObj::sim_out.write("Cache,");
   for(auto stat : stats) {
     SimObj::sim_out.write(std::to_string(stat)+",");
   }
-  SimObj::sim_out.write("\n");
+  SimObj::sim_out.write("\n");*/
 }
 
 

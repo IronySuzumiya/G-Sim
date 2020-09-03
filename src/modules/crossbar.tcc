@@ -39,6 +39,12 @@ void SimObj::Crossbar<v_t, e_t>::connect_output(Module<v_t, e_t>* out_module, ui
 }
 
 template<class v_t, class e_t>
+void SimObj::Crossbar<v_t, e_t>::dispatch(Utility::pipeline_data<v_t, e_t> data, uint64_t port_num) {
+  _input_items[port_num]++;
+  ready(data);
+}
+
+template<class v_t, class e_t>
 void SimObj::Crossbar<v_t, e_t>::ready(Utility::pipeline_data<v_t, e_t> data) {
   _msg_queue[route(data)].push(data);
   _output_items[route(data)]++;
@@ -62,6 +68,7 @@ void SimObj::Crossbar<v_t, e_t>::tick() {
       _msg_queue[pipeline_id].pop();
       //std::cout << "Queue[" << pipeline_id << "] Size = " << _msg_queue[pipeline_id].size() << "\n";
       _out_module[pipeline_id]->ready(ret);
+      ++_items_processed;
     }
   }
 }

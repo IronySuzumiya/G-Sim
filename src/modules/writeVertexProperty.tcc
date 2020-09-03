@@ -77,9 +77,10 @@ void SimObj::WriteVertexProperty<v_t, e_t>::tick(void) {
         // Upstream sent _edge property
         _ready = false;
         _mem_flag = false;
-        _dram->write(_curr_addr, &_mem_flag);
+        _dram->write(_data.vertex_id_addr, &_mem_flag);
         _stall = STALL_MEM;
         next_state = OP_MEM_WAIT;
+        _items_processed++;
       }
       else {
         // Wait for upstream to send _edge
@@ -94,7 +95,11 @@ void SimObj::WriteVertexProperty<v_t, e_t>::tick(void) {
         // Write to global mem
         if(_data.updated) {
           _graph->vertex[_data.vertex_id].property = _data.vertex_data;
+
+#ifndef APP_PR
           _process->push_back(_data.vertex_id);
+#endif
+
           _throughput++;
         }
         _curr_addr += 4;
@@ -131,6 +136,7 @@ void SimObj::WriteVertexProperty<v_t, e_t>::reset(void) {
 }
 
 
+#if 0
 template<class v_t, class e_t>
 void SimObj::WriteVertexProperty<v_t, e_t>::print_stats(void) {
   sim_out.write("-------------------------------------------------------------------------------\n");
@@ -156,6 +162,7 @@ void SimObj::WriteVertexProperty<v_t, e_t>::print_stats_csv() {
     + std::to_string(_throughput) + ","
     + std::to_string(_tick) + "\n");
 }
+#endif
 
 
 #ifdef MODULE_TRACE

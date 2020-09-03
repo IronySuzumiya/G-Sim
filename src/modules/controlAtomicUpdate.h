@@ -46,6 +46,8 @@ private:
   using Module<v_t, e_t>::_data;
   using Module<v_t, e_t>::_name;
   using Module<v_t, e_t>::_has_work;
+  using Module<v_t, e_t>::_items_processed;
+  using Module<v_t, e_t>::_stall_ticks;
 #if MODULE_TRACE
   using Module<v_t, e_t>::_in_data;
   using Module<v_t, e_t>::_in_logger;
@@ -60,6 +62,9 @@ private:
   void update_logger();
 #endif
 
+  uint64_t _items_directly_passed;
+  uint64_t _items_stalled;
+
   op_t _state;
   bool _op_complete;
   std::list<Utility::pipeline_data<v_t, e_t>> _nodes;
@@ -68,6 +73,10 @@ private:
   bool dependency();
 
 public:
+  void print_stats();
+  void print_stats_csv();
+  void clear_stats();
+
   ControlAtomicUpdate(std::string name, uint64_t id);
   ~ControlAtomicUpdate();
 

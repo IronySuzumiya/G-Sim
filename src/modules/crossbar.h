@@ -46,6 +46,7 @@ public:
   void connect_output(Module<v_t, e_t>* out_module, uint64_t port_num);
 
   stall_t is_stalled(Utility::pipeline_data<v_t, e_t> data);
+  void dispatch(Utility::pipeline_data<v_t, e_t> data, uint64_t port_num);
   void ready(Utility::pipeline_data<v_t, e_t> data);
   bool busy();
   void clear_stats();

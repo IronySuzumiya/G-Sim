@@ -15,6 +15,7 @@ namespace GraphMat {
 
 class bfs_t {
 public:
+  static const uint32_t size = 4;
   bool visited;
   bfs_t() {
     visited = false;

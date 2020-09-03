@@ -44,6 +44,7 @@ private:
   using Module<v_t, e_t>::_data;
   using Module<v_t, e_t>::_name;
   using Module<v_t, e_t>::_has_work;
+  using Module<v_t, e_t>::_items_processed;
 #if MODULE_TRACE
   using Module<v_t, e_t>::_in_data;
   using Module<v_t, e_t>::_in_logger;
@@ -67,6 +68,8 @@ private:
 public:
   ProcessEdge(int delay_cycles, GraphMat::GraphApp<v_t, e_t>* graph_app, std::string name, uint64_t id);
   ~ProcessEdge();
+
+  stall_t is_stalled(void);
 
   void tick(void);
 };

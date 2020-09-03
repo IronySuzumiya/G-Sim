@@ -18,6 +18,7 @@ namespace GraphMat {
 
 class sssp_t {
 public:
+  static const uint32_t size = 8;
   uint64_t distance;
   sssp_t() {
     distance = ~0;

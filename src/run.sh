@@ -1,8 +1,9 @@
 #!/bin/bash
 
-APP=('bfs' 'cc' 'sssp')
+#APP=('bfs' 'cc' 'sssp' 'pr')
+APP=('pr')
 PL=('1' '8' '16' '32')
-GRAPHS=('shl_200' 'gemat11' 'mbeacxc' 'lshp1882' 'lock_700' 'citeseer')
+GRAPHS=('shl_200' 'gemat11' 'mbeacxc' 'lshp1882' 'lock_700' 'citationCiteseer')
 GRAPHS_LARGE=('orani678' 'amazon0302' 'G42')
 #GRAPHS_LARGE=('soc_Slashdot0902' 'orani678' 'amazon0302' 'G42')
 

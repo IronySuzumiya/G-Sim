@@ -66,13 +66,15 @@ void SimObj::ReadDstProperty<v_t, e_t>::tick(void) {
         _ready = false;
         _mem_flag = false;
         _data.vertex_dst_id = _graph->vertex[_data.vertex_id].edges[_data.edge_id].dst;
-        _data.vertex_dst_id_addr = (uint64_t)((void*)(&_graph->vertex[_data.vertex_dst_id]));
+        //_data.vertex_dst_id_addr = (uint64_t)((void*)(&_graph->vertex[_data.vertex_dst_id]));
+        _data.vertex_dst_id_addr = _data.vertex_dst_id * _graph->vertex[_data.vertex_dst_id].property.size;
         _dram->read(_data.vertex_dst_id_addr, &_mem_flag, false);
 #ifdef MODULE_TRACE
         address_curr = _data.vertex_dst_id_addr;
 #endif
         _stall = STALL_MEM;
         next_state = OP_MEM_WAIT;
+        _items_processed++;
       }
       else {
         // Wait for upstream to send vertex

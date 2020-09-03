@@ -17,6 +17,8 @@ SimObj::ControlAtomicUpdate<v_t, e_t>::ControlAtomicUpdate(std::string name, uin
   _state = OP_WAIT;
   _ready = false;
   _op_complete = false;
+  _items_stalled = 0;
+  _items_directly_passed = 0;
 #if MODULE_TRACE
   ready_prev = false;
   send_prev = false;
@@ -64,6 +66,31 @@ bool SimObj::ControlAtomicUpdate<v_t, e_t>::dependency() {
 }
 
 template<class v_t, class e_t>
+void SimObj::ControlAtomicUpdate<v_t, e_t>::print_stats() {
+  sim_out.write("-------------------------------------------------------------------------------\n");
+  sim_out.write("[ " + _name + " ]\n");
+  sim_out.write("  Stalls:\n");
+  sim_out.write("    STALL_CAN_ACCEPT: " + std::to_string(_stall_ticks[STALL_CAN_ACCEPT]) + " cycles\n");
+  sim_out.write("    STALL_PROCESSING: " + std::to_string(_stall_ticks[STALL_PROCESSING]) + " cycles\n");
+  sim_out.write("    STALL_PIPE:       " + std::to_string(_stall_ticks[STALL_PIPE]) + " cycles\n");
+  sim_out.write("    STALL_MEM:        " + std::to_string(_stall_ticks[STALL_MEM]) + " cycles\n");
+  sim_out.write("  Performance:\n");
+  sim_out.write("    Items Directly Passed:  " + std::to_string(_items_directly_passed) + "\n");
+  sim_out.write("    Items Stalled:  " + std::to_string(_items_stalled) + "\n");
+}
+
+template<class v_t, class e_t>
+void SimObj::ControlAtomicUpdate<v_t, e_t>::print_stats_csv() {
+  sim_out.write(_name + "," 
+    + std::to_string(_stall_ticks[STALL_CAN_ACCEPT]) + ","
+    + std::to_string(_stall_ticks[STALL_PROCESSING]) + ","
+    + std::to_string(_stall_ticks[STALL_PIPE]) + ","
+    + std::to_string(_stall_ticks[STALL_MEM]) + ","
+    + std::to_string(_items_directly_passed) + ","
+    + std::to_string(_items_stalled) + "\n");
+}
+
+template<class v_t, class e_t>
 void SimObj::ControlAtomicUpdate<v_t, e_t>::tick(void) {
   _tick++;
   op_t next_state = _state;
@@ -83,6 +110,8 @@ void SimObj::ControlAtomicUpdate<v_t, e_t>::tick(void) {
           next_state = OP_WAIT;
           _stall = STALL_CAN_ACCEPT;
           _has_work = false;
+          ++_items_directly_passed;
+          ++_items_processed;
         }
         else {
           next_state = OP_STALL;
@@ -106,6 +135,8 @@ void SimObj::ControlAtomicUpdate<v_t, e_t>::tick(void) {
         next_state = OP_WAIT;
         _stall = STALL_CAN_ACCEPT;
         _has_work = false;
+        ++_items_stalled;
+        ++_items_processed;
       }
       else {
         next_state = OP_STALL;
@@ -144,6 +175,13 @@ void SimObj::ControlAtomicUpdate<v_t, e_t>::debug(void) {
     std::cout << *it << ",";
   }
   std::cout << "]\n";
+}
+
+template<class v_t, class e_t>
+void SimObj::ControlAtomicUpdate<v_t, e_t>::clear_stats() {
+  Module<v_t, e_t>::clear_stats();
+  _items_stalled = 0;
+  _items_directly_passed = 0;
 }
 
 #ifdef MODULE_TRACE

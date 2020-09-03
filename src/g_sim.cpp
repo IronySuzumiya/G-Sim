@@ -69,6 +69,12 @@ int main(int argc, char** argv) {
 
   Utility::Graph<vertex_t, edge_t> graph;
   graph.import(opt.graph_path);
+
+  /*uint64_t num_total_edges = 0;
+  for(uint64_t i = 0; i < graph.vertex.size(); i++) {
+    num_total_edges += graph.vertex[i].edges.size();
+  }*/
+
 #ifdef APP_BFS
   GraphMat::BFS<vertex_t, edge_t> app;
 #endif
@@ -86,9 +92,10 @@ int main(int argc, char** argv) {
   std::vector<SimObj::Pipeline<vertex_t, edge_t>*>* tile = new std::vector<SimObj::Pipeline<vertex_t, edge_t>*>;
 
   SimObj::Crossbar<vertex_t, edge_t>* crossbar = new SimObj::Crossbar<vertex_t, edge_t>(opt.num_pipelines);
+  crossbar->set_name("Crossbar");
 #ifdef DRAMSIM2
   SimObj::Memory* dram = new SimObj::DRAM;
-  SimObj::Memory* mem = new SimObj::Cache(64, dram);
+  SimObj::Memory* mem = new SimObj::Cache(1000, dram);
 #else
   SimObj::Memory* mem = new SimObj::Memory(0,0,1000);
 #endif
@@ -108,6 +115,8 @@ int main(int argc, char** argv) {
 
   // Iteration Loop:
   for(uint64_t iteration = 0; iteration < opt.num_iter && !process->empty(); iteration++) {
+    app.do_every_iteration(graph, process);
+
     // Reset all the stats Counters:
     SimObj::sim_out.write("---------------------------------------------------------------\n");
     SimObj::sim_out.write("ITERATION " + std::to_string(iteration) + "\n");
@@ -125,7 +134,9 @@ int main(int argc, char** argv) {
     while(!complete || (process->size() != 0)) {
       global_tick++;
       process_cycles++;
+//#ifndef APP_PR
       crossbar->tick();
+//#endif
       mem->tick();
       std::for_each(tile->begin(), tile->end(), [](SimObj::Pipeline<vertex_t, edge_t>* a) {a->tick_process();});
       //std::for_each(tile->begin(), tile->end(), [](SimObj::Pipeline<vertex_t, edge_t>* a) {a->print_debug();});
@@ -138,13 +149,35 @@ int main(int argc, char** argv) {
     //print_queue("Apply", apply, iteration);
 #endif
 
+/*
+#ifdef APP_PR
+    uint64_t apply_size_each_tile = graph.vertex.size() / opt.num_pipelines;
+    uint64_t tile_start = 0;
+    for(uint64_t i = 0; i < opt.num_pipelines - 1; i++) {
+      (*tile)[i]->set_apply(tile_start, tile_start + apply_size_each_tile);
+      tile_start += apply_size_each_tile;
+    }
+    (*tile)[opt.num_pipelines - 1]->set_apply(tile_start, graph.vertex.size());
+#endif
+*/
+
     // Accumulate the edges processed each iteration
     edges_process_phase = 0;
     std::for_each(tile->begin(), tile->end(), [&edges_process_phase](SimObj::Pipeline<vertex_t, edge_t>* a) mutable {
       edges_process_phase += a->apply_size();
     });
+
     std::cout << "Iteration: " << iteration << " Apply Size: " << edges_process_phase << "\n";
     edges_processed += edges_process_phase;
+
+#ifdef APP_PR
+    std::for_each(tile->begin(), tile->end(), [](SimObj::Pipeline<vertex_t, edge_t>* a) {a->make_apply_unique();});
+    edges_process_phase = 0;
+    std::for_each(tile->begin(), tile->end(), [&edges_process_phase](SimObj::Pipeline<vertex_t, edge_t>* a) mutable {
+      edges_process_phase += a->apply_size();
+    });
+    std::cout << "PageRank Actual Apply Size: " << edges_process_phase << "\n";
+#endif
     
     // Apply Phase
     std::for_each(tile->begin(), tile->end(), [](SimObj::Pipeline<vertex_t, edge_t>* a) {a->apply_ready();});
@@ -165,15 +198,42 @@ int main(int argc, char** argv) {
       });
     }
 
+#ifdef APP_PR
+    for(uint64_t i = 0; i < graph.vertex.size(); ++i) {
+      process->push_back(i);
+    }
+    /*if(iteration % 2) {
+      for(uint64_t i = 0; i < graph.vertex.size(); ++i) {
+        process->push_back(i);
+      }
+    } else {
+      for(uint64_t i = graph.vertex.size() - 1; i >= 0; --i) {
+        process->push_back(i);
+      }
+    }*/
+#endif
+
     // Print all the stats counters:
-    std::for_each(tile->begin(), tile->end(), [](SimObj::Pipeline<vertex_t, edge_t>* a) {a->print_stats_csv();});
-    crossbar->print_stats_csv();
+    std::for_each(tile->begin(), tile->end(), [](SimObj::Pipeline<vertex_t, edge_t>* a) {a->print_stats();});
+//#ifndef APP_PR
+    crossbar->print_stats();
+//#endif
     mem->print_stats();
+
+#ifdef APP_PR
+    std::for_each(tile->begin(), tile->end(), [](SimObj::Pipeline<vertex_t, edge_t>* a) {a->clear_scratchpad();});
+#endif
   }
 #ifdef DEBUG
   graph.printVertexProperties(30);
-  SimObj::sim_out.write("Global Ticks, " + std::to_string(global_tick) + ", Edges Processed, " + std::to_string(edges_processed) + ", Throughput (Edges/Cycle), " + std::to_string((float)edges_processed/(float)global_tick) + "\n");
-  SimObj::sim_out.write("Phase Durations:Process/Apply,"+std::to_string(process_cycles)+","+std::to_string(apply_cycles)+"\n");
+  SimObj::sim_out.write("---------------------------------------------------------------\n");
+  SimObj::sim_out.write("DONE!\n");
+  SimObj::sim_out.write("---------------------------------------------------------------\n");
+  SimObj::sim_out.write("  Global Ticks:             " + std::to_string(global_tick) + " cycles\n");
+  SimObj::sim_out.write("  Edges Processed:          " + std::to_string(edges_processed) + "\n");
+  SimObj::sim_out.write("  Throughput (Edges/Ticks): " + std::to_string((float)edges_processed/(float)global_tick) + "\n");
+  SimObj::sim_out.write("  Process Phase Durations:  " + std::to_string(process_cycles) + " cycles\n");
+  SimObj::sim_out.write("  Apply Phase Durations:    " + std::to_string(apply_cycles) + " cycles\n");
 #endif
 
   dram->print_stats();

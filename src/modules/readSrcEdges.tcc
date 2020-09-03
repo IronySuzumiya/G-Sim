@@ -78,6 +78,7 @@ void SimObj::ReadSrcEdges<v_t, e_t>::tick(void) {
           _scratchpad->read(0x01, &_mem_flag);
           _stall = STALL_MEM;
           next_state = OP_MEM_WAIT;
+          _items_processed += _graph->vertex[_data.vertex_id].edges.size();
         }
         else {
           // Edge List is Empty
@@ -100,6 +101,7 @@ void SimObj::ReadSrcEdges<v_t, e_t>::tick(void) {
           _data.edge_id = _edge_ptr;
           _data.edge_data = _graph->vertex[_data.vertex_id].edges[_edge_ptr].property;
           _data.vertex_dst_id = _graph->vertex[_data.vertex_id].edges[_edge_ptr].dst;
+          _data.vertex_dst_id_addr = _data.vertex_dst_id * _graph->vertex[_data.vertex_dst_id].property.size;
           _edge_ptr--;
           _data_set = true;
 #ifdef MODULE_TRACE
@@ -123,7 +125,7 @@ void SimObj::ReadSrcEdges<v_t, e_t>::tick(void) {
             _data.last_edge = true;
             _has_work = false;
           }
-          _next->ready(_data);
+          _next->dispatch(_data, _id);
         }
         else {
           next_state = OP_MEM_WAIT;

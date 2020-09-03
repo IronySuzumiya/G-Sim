@@ -12,6 +12,7 @@
 #include <string>
 #include <vector>
 #include <cstdint>
+#include <cassert>
 
 #include "pipeline_data.h"
 #include "log.h"
@@ -67,6 +68,7 @@ public:
   uint64_t get_attr(void); 
   virtual void ready(void);
   virtual void ready(Utility::pipeline_data<v_t, e_t> data);
+  virtual void dispatch(Utility::pipeline_data<v_t, e_t> data, uint64_t id);
   void set_next(Module* next);
   void set_prev(Module* prev);
   virtual void update_stats();

@@ -46,6 +46,11 @@ SimObj::Pipeline<v_t, e_t>::Pipeline(uint64_t pipeline_id, const Utility::Option
   p1->set_prev(NULL);
   p2->set_next(crossbar);
   p2->set_prev(p1);
+
+/*
+#ifndef APP_PR
+  p2->set_next(crossbar);
+  p2->set_prev(p1);
   // Crossbar goes here:
   crossbar->connect_input(p2, pipeline_id);
   crossbar->connect_output(alloc, pipeline_id);
@@ -58,6 +63,34 @@ SimObj::Pipeline<v_t, e_t>::Pipeline(uint64_t pipeline_id, const Utility::Option
   arbiter->set_prev(parallel_vertex_readers[0]);
   p4->set_next(p5);
   p4->set_prev(arbiter);
+#else
+  p2->set_next(p4);
+  p2->set_prev(p1);
+  p4->set_next(p5);
+  p4->set_prev(p2);
+#endif
+*/
+
+#ifndef APP_PR
+  // Crossbar goes here:
+  crossbar->connect_input(p2, pipeline_id);
+  crossbar->connect_output(alloc, pipeline_id);
+  alloc->set_prev(crossbar);
+  for(auto mod = parallel_vertex_readers.begin(); mod != parallel_vertex_readers.end(); mod++) {
+    (*mod)->set_next(arbiter);
+    (*mod)->set_prev(alloc);
+  }
+  arbiter->set_next(p4);
+  arbiter->set_prev(parallel_vertex_readers[0]);
+  p4->set_next(p5);
+  p4->set_prev(arbiter);
+#else
+  crossbar->connect_input(p2, pipeline_id);
+  crossbar->connect_output(p4, pipeline_id);
+  p4->set_next(p5);
+  p4->set_prev(p2);
+#endif
+  
   p5->set_next(p6);
   p5->set_prev(p4);
   p6->set_next(p7);
@@ -152,11 +185,15 @@ void SimObj::Pipeline<v_t, e_t>::tick_process() {
   p6->tick();
   p5->tick();
   p4->tick();
+
+#ifndef APP_PR
   arbiter->tick();
   for(auto mod = parallel_vertex_readers.begin(); mod != parallel_vertex_readers.end(); mod++) {
     (*mod)->tick();
   }
   alloc->tick();
+#endif
+
   p2->tick();
   p1->tick();
 }
@@ -219,14 +256,16 @@ void SimObj::Pipeline<v_t, e_t>::print_debug() {
 
 template<class v_t, class e_t>
 void SimObj::Pipeline<v_t, e_t>::print_stats() {
-  std::cout << "------Pipeline " << _id << "--------------\n";
+  sim_out.write("------Pipeline "+std::to_string(_id)+"--------------\n");
   p1->print_stats();
   p2->print_stats();
+#ifndef APP_PR
   alloc->print_stats();
   for(auto mod = parallel_vertex_readers.begin(); mod != parallel_vertex_readers.end(); mod++) {
     (*mod)->print_stats();
   }
   arbiter->print_stats();
+#endif
   p4->print_stats();
   p5->print_stats();
   p6->print_stats();
@@ -243,11 +282,13 @@ void SimObj::Pipeline<v_t, e_t>::print_stats_csv() {
   sim_out.write("------Pipeline "+std::to_string(_id)+"--------------\n");
   p1->print_stats_csv();
   p2->print_stats_csv();
+#ifndef APP_PR
   alloc->print_stats_csv();
   for(auto mod = parallel_vertex_readers.begin(); mod != parallel_vertex_readers.end(); mod++) {
     (*mod)->print_stats_csv();
   }
   arbiter->print_stats_csv();
+#endif
   p4->print_stats_csv();
   p5->print_stats_csv();
   p6->print_stats_csv();

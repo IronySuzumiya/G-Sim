@@ -69,6 +69,7 @@ void SimObj::Apply<v_t, e_t>::tick(void) {
         _counter = 0;
         next_state = OP_COUNT;
         _stall = STALL_PROCESSING;
+        _items_processed++;
       }
       else {
         // Wait for upstream to send vertex

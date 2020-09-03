@@ -47,6 +47,7 @@ private:
   using Module<v_t, e_t>::_name;
   using Module<v_t, e_t>::_stall_ticks;
   using Module<v_t, e_t>::_has_work;
+  using Module<v_t, e_t>::_items_processed;
 #if MODULE_TRACE
   using Module<v_t, e_t>::_in_data;
   using Module<v_t, e_t>::_in_logger;
@@ -80,8 +81,8 @@ public:
   ~WriteTempDstProperty();
 
   void tick(void);
-  void print_stats(void);
-  void print_stats_csv(void);
+  //void print_stats(void);
+  //void print_stats_csv(void);
 };
 
 } // namespace SimObj

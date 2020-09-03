@@ -44,7 +44,7 @@ sssp: $(PROG)
 pr: CPPFLAGS += -O3 -DAPP_PR -DVERBOSE -DDEBUG
 pr: $(PROG)
 
-debug: CPPFLAGS += -O0 -g -DVERBOSE -DDEBUG -DAPP_BFS
+debug: CPPFLAGS += -O0 -g -DVERBOSE -DDEBUG -DAPP_PR
 debug : $(PROG)
 
 verbose: CPPFLAGS += -O3 -DVERBOSE -DDEBUG

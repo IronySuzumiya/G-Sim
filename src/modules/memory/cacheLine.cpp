@@ -59,7 +59,7 @@ bool SimObj::CacheLine::getPrefetch() {
 
 void SimObj::CacheLine::insert(uint64_t addr, bool prefetch) {
   _lru = 0;
-  _address = addr & ~ACCESS_MASK;
+  _address = (addr & ~ACCESS_MASK);
   _valid = true;
   _dirty = false;
   _pf = prefetch;

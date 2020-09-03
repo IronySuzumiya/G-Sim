@@ -16,6 +16,7 @@
 #include <vector>
 #include <queue>
 #include <list>
+#include <algorithm>
 
 // Process Modules
 #include "module.h"
@@ -100,6 +101,25 @@ public:
   // Stats Interface:
   uint64_t apply_size() {
     return apply->size();
+  }
+
+  void clear_apply() {
+    apply->clear();
+  }
+
+  /*void set_apply(uint64_t start, uint64_t end) {
+    for(uint64_t i = start; i < end; ++i) {
+      apply->push_back(i);
+    }
+  }*/
+
+  void make_apply_unique() {
+    apply->sort();
+    apply->erase(std::unique(apply->begin(), apply->end()), apply->end());
+  }
+
+  void clear_scratchpad() {
+    scratchpad_map->clear();
   }
 
 }; // class Pipeline
