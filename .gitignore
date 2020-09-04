@@ -12,8 +12,10 @@
 src/trace
 src/output
 src/graphs
-src/modules/memory/DRAMSim2
+src/modules/memory/DRAMsim3
 *.so
 src/test/
 src/exp/
 .vscode/
+*.json
+*.txt

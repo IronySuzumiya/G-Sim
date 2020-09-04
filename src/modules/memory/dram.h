@@ -1,7 +1,7 @@
 /*
  * Andrew Smith
  * 
- * DRAM Memory. Derived from Memory class, Uses DRAMSim2 to model the timing
+ * DRAM Memory. Derived from Memory class, Uses DRAMSim3 to model the timing
  *
  */
 
@@ -11,7 +11,7 @@
 #include <list>
 #include <tuple>
 #include <vector>
-#include "DRAMSim.h"
+#include "dramsim3.h"
 #include "memory.h"
 
 namespace SimObj {
@@ -20,19 +20,19 @@ class DRAM : public Memory {
 private:
   std::list<std::tuple<uint64_t, bool*, bool>> _write_queue;
   std::list<std::tuple<uint64_t, bool*, bool>> _read_queue;
+  std::list<std::tuple<uint64_t, bool*, bool, bool>> _pending_queue;
 
-  DRAMSim::TransactionCompleteCB *write_cb;
-  DRAMSim::TransactionCompleteCB *read_cb;
+  std::function<void(uint64_t)> write_cb;
+  std::function<void(uint64_t)> read_cb;
 
-  DRAMSim::MultiChannelMemorySystem *_mem;
+  dramsim3::MemorySystem *_mem;
 
-  // DRAMSim2 Callbacks:
-  void read_complete(unsigned int id, uint64_t address, uint64_t clock_cycle);
-  void write_complete(unsigned int id, uint64_t address, uint64_t clock_cycle);
+  // DRAMSim3 Callbacks:
+  void read_complete(uint64_t address);
+  void write_complete(uint64_t address);
 
 public:
-  DRAM(void);
-  DRAM(uint64_t access_latency, uint64_t write_latency, uint64_t num_simultaneous_requests);
+  DRAM(uint64_t access_latency=0, uint64_t write_latency=0);
   ~DRAM();
 
   void tick(void);

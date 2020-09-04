@@ -1,16 +1,16 @@
-INCPATH = -I. -Imodules/memory -Imodules/crossbar -Imodules -Iutil/mm_io -Iutil -IgraphMat -Imodules/memory/DRAMSim2
+INCPATH = -I. -Imodules/memory -Imodules/crossbar -Imodules -Iutil/mm_io -Iutil -IgraphMat -Imodules/memory/DRAMsim3/src
 CPPFLAGS += -std=c++17 -Wall -Wfatal-errors -Werror $(INCPATH)
 CFLAGS += -Wall $(INCPATH)
 
-ifdef DRAMSIM2
-CPPFLAGS += -DDRAMSIM2
+ifdef DRAMSIM3
+CPPFLAGS += -DDRAMSIM3
 endif
 ifdef MODULE_TRACE
 CPPFLAGS += -DMODULE_TRACE
 endif
 #CPPFLAGS += -pg 
-LFLAGS += -lboost_program_options -lstdc++fs -lrt -ldramsim
-LPATH = -L/usr/local/bin -L./modules/memory/DRAMSim2
+LFLAGS += -lboost_program_options -lstdc++fs -lrt -ldramsim3
+LPATH = -L/usr/local/bin -L./modules/memory/DRAMsim3
 
 PROG := g_sim
 

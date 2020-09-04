@@ -1,3 +1,3 @@
-[submodule "src/modules/memory/DRAMSim2"]
-	path = src/modules/memory/DRAMSim2
-	url = https://github.com/umd-memsys/DRAMSim2.git
+[submodule "src/modules/memory/DRAMsim3"]
+	path = src/modules/memory/DRAMsim3
+	url = https://github.com/umd-memsys/DRAMsim3.git

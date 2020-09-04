@@ -93,7 +93,7 @@ int main(int argc, char** argv) {
 
   SimObj::Crossbar<vertex_t, edge_t>* crossbar = new SimObj::Crossbar<vertex_t, edge_t>(opt.num_pipelines);
   crossbar->set_name("Crossbar");
-#ifdef DRAMSIM2
+#ifdef DRAMSIM3
   SimObj::Memory* dram = new SimObj::DRAM;
   SimObj::Memory* mem = new SimObj::Cache(1000, dram);
 #else

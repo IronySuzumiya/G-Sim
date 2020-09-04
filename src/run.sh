@@ -8,7 +8,7 @@ GRAPHS_LARGE=('orani678' 'amazon0302' 'G42')
 #GRAPHS_LARGE=('soc_Slashdot0902' 'orani678' 'amazon0302' 'G42')
 
 for app in "${APP[@]}"; do
-  make clean && make DRAMSIM2=1 MODULE_TRACE=1 ${app}
+  make clean && make DRAMSIM3=1 ${app}
   for graph in "${GRAPHS[@]}"; do
     for pipeline in "${PL[@]}"; do
       inputGraph="$graph"
@@ -22,7 +22,6 @@ for app in "${APP[@]}"; do
       if [ $? -eq 0 ]; then
         `rm -f trace/*_out.csv`
         zip -r ${fbase}_trace.zip trace
-        mv dramsim.log ${fbase}_dramsim.out
       fi
       mv simulator_output.log ${fbase}_log.out
     done
@@ -40,7 +39,6 @@ for app in "${APP[@]}"; do
       if [ $? -eq 0 ]; then
         `rm -f trace/*_out.csv`
         zip -r ${fbase}_trace.zip trace
-        mv dramsim.log ${fbase}_dramsim.out
       fi
       mv simulator_output.log ${fbase}_log.out
     done

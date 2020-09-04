@@ -10,7 +10,7 @@
 
 #include <queue>
 #include <vector>
-#include "DRAMSim.h"
+#include "dramsim3.h"
 
 namespace SimObj {
 
