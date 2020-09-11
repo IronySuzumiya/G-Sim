@@ -24,68 +24,79 @@ SimObj::DRAM::~DRAM() {
 }
 
 void SimObj::DRAM::tick(void) {
-  _tick++;
-  _mem->ClockTick();
-  for(auto it = _pending_queue.begin(); it != _pending_queue.end(); it++) {
-    if(_mem->WillAcceptTransaction(std::get<0>(*it), std::get<3>(*it))) {
-      std::tuple<uint64_t, bool*, bool> transaction = std::make_tuple(std::get<0>(*it), std::get<1>(*it), std::get<2>(*it));
-      if(std::get<3>(*it)) {
-        _write_queue.push_back(transaction);
+  static uint64_t counter1, counter2;
+  counter1 += 16;
+  while(counter2 < counter1) {
+    counter2 += 10;
+    _tick++;
+    _mem->ClockTick();
+    for(auto it = _pending_queue.begin(); it != _pending_queue.end(); ) {
+      if(_mem->WillAcceptTransaction(std::get<0>(*it), std::get<2>(*it))) {
+        if(std::get<2>(*it)) {
+          _write_queue.push_back(*it);
+        } else {
+          _read_queue.push_back(*it);
+        }
+        _mem->AddTransaction(std::get<0>(*it), std::get<2>(*it));
+        it = _pending_queue.erase(it);
       } else {
-        _read_queue.push_back(transaction);
+        ++it;
       }
-      _mem->AddTransaction(std::get<0>(*it), std::get<3>(*it));
-      it = _pending_queue.erase(it);
     }
+  }
+  if(counter1 == counter2) {
+    counter1 = 0;
+    counter2 = 0;
   }
 }
   
-void SimObj::DRAM::write(uint64_t addr, bool* complete, bool sequential) {
+void SimObj::DRAM::write(uint64_t addr, bool* complete) {
 #ifdef DEBUG
   //std::cout << "DRAM Write Issued @ " << _tick << " with address: " << std::hex << addr << "\n";
 #endif
+  std::tuple<uint64_t, bool*, bool> transaction = std::make_tuple(addr, complete, true);
   if(_mem->WillAcceptTransaction(addr, true)) {
-    std::tuple<uint64_t, bool*, bool> transaction = std::make_tuple(addr, complete, sequential);
     _mem->AddTransaction(addr, true);
     _write_queue.push_back(transaction);
   } else {
-    std::tuple<uint64_t, bool*, bool, bool> transaction = std::make_tuple(addr, complete, sequential, true);
     _pending_queue.push_back(transaction);
   }
 }
 
-void SimObj::DRAM::read(uint64_t addr, bool* complete, bool sequential) {
+void SimObj::DRAM::read(uint64_t addr, bool* complete) {
 #ifdef DEBUG
   //std::cout << "DRAM Read  Issued @ " << _tick << " with address: " << std::hex << addr << "\n";
 #endif
+  std::tuple<uint64_t, bool*, bool> transaction = std::make_tuple(addr, complete, false);
   if(_mem->WillAcceptTransaction(addr, false)) {
-    std::tuple<uint64_t, bool*, bool> transaction = std::make_tuple(addr, complete, sequential);
     _mem->AddTransaction(addr, false);
     _read_queue.push_back(transaction);
   } else {
-    std::tuple<uint64_t, bool*, bool, bool> transaction = std::make_tuple(addr, complete, sequential, false);
     _pending_queue.push_back(transaction);
   }
 }
 
 void SimObj::DRAM::read_complete(uint64_t address) {
-  for(auto it = _read_queue.begin(); it != _read_queue.end(); it++) {
+  for(auto it = _read_queue.begin(); it != _read_queue.end(); ) {
     if(std::get<0>(*it) == address) {
       *(std::get<1>(*it)) = true;
       it = _read_queue.erase(it);
       return;
+    } else {
+      ++it;
     }
   }
   assert(false); 
 }
 
 void SimObj::DRAM::write_complete(uint64_t address) {
-  //Dequeue the transaction pair from the list of outstanding transactions:
-  for(auto it = _write_queue.begin(); it != _write_queue.end(); it++) {
+  for(auto it = _write_queue.begin(); it != _write_queue.end(); ) {
     if(std::get<0>(*it) == address) {
       *(std::get<1>(*it)) = true;
       it = _write_queue.erase(it);
       return;
+    } else {
+      ++it;
     }
   }
   assert(false);

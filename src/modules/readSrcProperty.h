@@ -83,7 +83,7 @@ private:
 
 public:
   bool _mem_flag;
-  ReadSrcProperty(Memory* dram, std::list<uint64_t>* process, Utility::Graph<v_t, e_t>* graph, uint64_t base_addr, std::string name, uint64_t id);
+  ReadSrcProperty(Memory* dram, std::list<uint64_t>* process, Utility::Graph<v_t, e_t>* graph, std::string name, uint64_t id);
   ~ReadSrcProperty();
 
   void tick(void);

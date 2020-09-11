@@ -77,7 +77,7 @@ private:
 
 public:
   bool _mem_flag;
-  ReadVertexProperty(Memory* dram, std::list<uint64_t>* apply, Utility::Graph<v_t, e_t>* graph, uint64_t base_addr, std::string name, uint64_t id);
+  ReadVertexProperty(Memory* dram, std::list<uint64_t>* apply, Utility::Graph<v_t, e_t>* graph, std::string name, uint64_t id);
   ~ReadVertexProperty();
 
   void tick(void);

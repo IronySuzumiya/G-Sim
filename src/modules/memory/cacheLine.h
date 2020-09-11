@@ -13,9 +13,6 @@
 
 #include "dram.h"
 
-#define ACCESS_MASK 0x3F
-#define LINE_SIZE 64
-
 namespace SimObj {
 
 class CacheLine {
@@ -38,6 +35,8 @@ public:
   uint64_t getLRU();
   bool getPrefetch();
   void tick();
+
+  void writeback();
   
   void insert(uint64_t addr, bool prefetch = false);
   void evict();

@@ -127,6 +127,12 @@ void Graph<v_t, e_t>::import(std::string fname) {
     }
   }
 
+  uint64_t edge_offset = 0;
+  for(uint64_t j = 0; j < vertex.size(); ++j) {
+    vertex[j].edge_list_offset = edge_offset;
+    edge_offset += vertex[j].edges.size();
+  }
+
   std::cout << "\n";
   return;
 }

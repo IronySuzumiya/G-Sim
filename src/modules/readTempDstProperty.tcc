@@ -65,11 +65,11 @@ void SimObj::ReadTempDstProperty<v_t, e_t>::tick(void) {
         // Upstream sent vertex & vertex property
         _ready = false;
         _mem_flag = false;
-        _scratchpad->read(_data.vertex_dst_id_addr, &_mem_flag);
         if(_scratch_mem->find(_data.vertex_dst_id) != _scratch_mem->end()) {
+          _scratchpad->read(TEMP_VPROP_ADDR_OFFSET + _data.vertex_dst_id_addr, &_mem_flag);
           _data.vertex_temp_dst_data = _scratch_mem->find(_data.vertex_dst_id)->second.vertex_temp_dst_data;
-        }
-        else {
+        } else {
+          _scratchpad->alloc(TEMP_VPROP_ADDR_OFFSET + _data.vertex_dst_id_addr, &_mem_flag);
           _data.vertex_temp_dst_data = v_t();
         }
         _stall = STALL_MEM;

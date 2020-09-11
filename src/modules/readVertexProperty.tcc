@@ -9,7 +9,7 @@
 #include <sstream>
 
 template<class v_t, class e_t>
-SimObj::ReadVertexProperty<v_t, e_t>::ReadVertexProperty(Memory* dram, std::list<uint64_t>* apply, Utility::Graph<v_t, e_t>* graph, uint64_t base_addr, std::string name, uint64_t id) {
+SimObj::ReadVertexProperty<v_t, e_t>::ReadVertexProperty(Memory* dram, std::list<uint64_t>* apply, Utility::Graph<v_t, e_t>* graph, std::string name, uint64_t id) {
   assert(dram != NULL);
   assert(apply != NULL);
   assert(graph != NULL);
@@ -21,8 +21,6 @@ SimObj::ReadVertexProperty<v_t, e_t>::ReadVertexProperty(Memory* dram, std::list
   _ready = false;
   _mem_flag = false;
   _state = OP_WAIT;
-  _base_addr = base_addr;
-  _curr_addr = base_addr;
 #if MODULE_TRACE
   ready_prev = false;
   mem_flag_prev = false;

@@ -70,11 +70,6 @@ int main(int argc, char** argv) {
   Utility::Graph<vertex_t, edge_t> graph;
   graph.import(opt.graph_path);
 
-  /*uint64_t num_total_edges = 0;
-  for(uint64_t i = 0; i < graph.vertex.size(); i++) {
-    num_total_edges += graph.vertex[i].edges.size();
-  }*/
-
 #ifdef APP_BFS
   GraphMat::BFS<vertex_t, edge_t> app;
 #endif
@@ -87,21 +82,19 @@ int main(int argc, char** argv) {
 #ifdef APP_PR
   GraphMat::PR<vertex_t, edge_t> app;
 #endif
-  app.initialize(graph, process); 
+  app.initialize(graph, process);
 
   std::vector<SimObj::Pipeline<vertex_t, edge_t>*>* tile = new std::vector<SimObj::Pipeline<vertex_t, edge_t>*>;
 
   SimObj::Crossbar<vertex_t, edge_t>* crossbar = new SimObj::Crossbar<vertex_t, edge_t>(opt.num_pipelines);
   crossbar->set_name("Crossbar");
-#ifdef DRAMSIM3
+
   SimObj::Memory* dram = new SimObj::DRAM;
-  SimObj::Memory* mem = new SimObj::Cache(1000, dram);
-#else
-  SimObj::Memory* mem = new SimObj::Memory(0,0,1000);
-#endif
+  SimObj::Memory* cache = new SimObj::Cache(opt.cache_num_lines, opt.cache_line_data_width, opt.cache_num_set_associative_way, dram);
+  cache->set_name("Cache");
 
   for(uint64_t i = 0; i < opt.num_pipelines; i++) {
-    SimObj::Pipeline<vertex_t, edge_t>* temp = new SimObj::Pipeline<vertex_t, edge_t>(i, opt, &graph, process, &app, mem, crossbar, opt.num_dst_readers);
+    SimObj::Pipeline<vertex_t, edge_t>* temp = new SimObj::Pipeline<vertex_t, edge_t>(i, opt, &graph, process, &app, cache, dram, crossbar, opt.num_dst_readers);
     tile->push_back(temp);
   }
 
@@ -117,6 +110,10 @@ int main(int argc, char** argv) {
   for(uint64_t iteration = 0; iteration < opt.num_iter && !process->empty(); iteration++) {
     app.do_every_iteration(graph, process);
 
+    #ifdef LARGE_GRAPH
+    // TODO: Graph Partitioning
+    #endif
+
     // Reset all the stats Counters:
     SimObj::sim_out.write("---------------------------------------------------------------\n");
     SimObj::sim_out.write("ITERATION " + std::to_string(iteration) + "\n");
@@ -127,7 +124,7 @@ int main(int argc, char** argv) {
 #ifdef DEBUG
     print_queue("Process", process, iteration);
 #endif
-    mem->reset();
+    cache->reset();
     // Processing Phase 
     std::for_each(tile->begin(), tile->end(), [](SimObj::Pipeline<vertex_t, edge_t>* a) {a->process_ready();});
     complete = false;
@@ -137,7 +134,8 @@ int main(int argc, char** argv) {
 //#ifndef APP_PR
       crossbar->tick();
 //#endif
-      mem->tick();
+      dram->tick();
+      cache->tick();
       std::for_each(tile->begin(), tile->end(), [](SimObj::Pipeline<vertex_t, edge_t>* a) {a->tick_process();});
       //std::for_each(tile->begin(), tile->end(), [](SimObj::Pipeline<vertex_t, edge_t>* a) {a->print_debug();});
       complete = true;
@@ -145,9 +143,6 @@ int main(int argc, char** argv) {
         if(!a->process_complete() || crossbar->busy()) complete = false;
       });
     }
-#ifdef DEBUG
-    //print_queue("Apply", apply, iteration);
-#endif
 
 /*
 #ifdef APP_PR
@@ -185,7 +180,8 @@ int main(int argc, char** argv) {
     while(!complete || (apply_size != 0)) {
       global_tick++;
       apply_cycles++;
-      mem->tick();
+      dram->tick();
+      cache->tick();
       std::for_each(tile->begin(), tile->end(), [](SimObj::Pipeline<vertex_t, edge_t>* a) {a->tick_apply();});
       //std::for_each(tile->begin(), tile->end(), [](SimObj::Pipeline<vertex_t, edge_t>* a) {a->print_debug();});
       complete = true;
@@ -218,7 +214,7 @@ int main(int argc, char** argv) {
 //#ifndef APP_PR
     crossbar->print_stats();
 //#endif
-    mem->print_stats();
+    cache->print_stats();
 
 #ifdef APP_PR
     std::for_each(tile->begin(), tile->end(), [](SimObj::Pipeline<vertex_t, edge_t>* a) {a->clear_scratchpad();});

@@ -39,18 +39,19 @@ namespace Utility {
   class Options {
     public:
       std::string logfile = "";
+
+      // Cache options
+      unsigned long long int cache_line_data_width = 64; // Bytes
+      unsigned long long int cache_num_lines = 1024;
+      unsigned long long int cache_num_set_associative_way = 8;
       
       // Scratchpad options
+      unsigned long long int scratchpad_line_data_width = 64; // Bytes
+      unsigned long long int scratchpad_num_lines = 16384; // lines
+      unsigned long long int scratchpad_num_set_associative_way = 8;
       unsigned long long int scratchpad_read_latency = 1;
       unsigned long long int scratchpad_write_latency = 1;
       unsigned long long int scratchpad_num_simultaneous_requests = 4;
-      unsigned long long int scratchpad_data_width = 4;
-      
-      // Scratchpad options
-      unsigned long long int dram_read_latency = 5;
-      unsigned long long int dram_write_latency = 30;
-      unsigned long long int dram_num_simultaneous_requests = 1000;
-      unsigned long long int dram_data_width = 256;
 
       // Simultaion Options
       unsigned long long int num_iter = 10000;
@@ -78,20 +79,21 @@ namespace Utility {
             ("logfile", po::value<std::string>(&logfile) ,"the name of the log file to write to")
           ;
 
-          po::options_description scratch("Scratchpad Options");
-          scratch.add_options()
-            ("scratch_read_latency", po::value<unsigned long long int>(&scratchpad_read_latency), "scratchpad read latency in cycles")
-            ("scratch_write_latency", po::value<unsigned long long int>(&scratchpad_write_latency), "scratchpad write latency in cycles")
-            ("scratch_num_requests", po::value<unsigned long long int>(&scratchpad_num_simultaneous_requests), "number of simultaneous requests")
-            ("scratch_width", po::value<unsigned long long int>(&scratchpad_data_width), "scratchpad data width in bytes");
+          po::options_description cache("Cache Options");
+          cache.add_options()
+            ("cache_line_data_width", po::value<unsigned long long int>(&cache_line_data_width), "cache line data width in bytes")
+            ("cache_num_lines", po::value<unsigned long long int>(&cache_num_lines), "number of cache lines")
+            ("cache_num_set_associative_way", po::value<unsigned long long int>(&cache_num_set_associative_way), "number of cache set associative way")
           ;
 
-          po::options_description dram("DRAM Options");
-          dram.add_options()
-            ("dram_read_latency", po::value<unsigned long long int>(&dram_read_latency), "dram read latency in cycles")
-            ("dram_write_latency", po::value<unsigned long long int>(&dram_write_latency), "dram write latency in cycles")
-            ("dram_num_requests", po::value<unsigned long long int>(&dram_num_simultaneous_requests), "number of simultaneous requests")
-            ("dram_width", po::value<unsigned long long int>(&dram_data_width), "dram data width in bytes");
+          po::options_description scratch("Scratchpad Options");
+          scratch.add_options()
+            ("scratchpad_line_data_width", po::value<unsigned long long int>(&scratchpad_line_data_width), "scratchpad line data width in bytes")
+            ("scratchpad_num_lines", po::value<unsigned long long int>(&scratchpad_num_lines), "number of scratchpad lines")
+            ("scratchpad_num_set_associative_way", po::value<unsigned long long int>(&scratchpad_num_set_associative_way), "number of scratchpad set associative way")
+            ("scratch_read_latency", po::value<unsigned long long int>(&scratchpad_read_latency), "scratchpad read latency in cycles")
+            ("scratch_write_latency", po::value<unsigned long long int>(&scratchpad_write_latency), "scratchpad write latency in cycles")
+            ("scratchpad_num_simultaneous_requests", po::value<unsigned long long int>(&scratchpad_num_simultaneous_requests), "number of scratchpad simultaneous requests")
           ;
 
           po::options_description sim("Simulation Options");
@@ -112,8 +114,8 @@ namespace Utility {
           po::options_description all_options;
           all_options.add(desc);
           all_options.add(io);
+          all_options.add(cache);
           all_options.add(scratch);
-          all_options.add(dram);
           all_options.add(sim);
           all_options.add(graph);
 

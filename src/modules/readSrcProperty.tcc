@@ -14,7 +14,7 @@
 #include <sstream>
 
 template<class v_t, class e_t>
-SimObj::ReadSrcProperty<v_t, e_t>::ReadSrcProperty(Memory* dram, std::list<uint64_t>* process, Utility::Graph<v_t, e_t>* graph, uint64_t base_addr, std::string name, uint64_t id) {
+SimObj::ReadSrcProperty<v_t, e_t>::ReadSrcProperty(Memory* dram, std::list<uint64_t>* process, Utility::Graph<v_t, e_t>* graph, std::string name, uint64_t id) {
   assert(dram != NULL);
   assert(process != NULL);
   assert(graph != NULL);
@@ -26,8 +26,6 @@ SimObj::ReadSrcProperty<v_t, e_t>::ReadSrcProperty(Memory* dram, std::list<uint6
   _state = OP_WAIT;
   _mem_flag = false;
   _fetched = false;
-  _base_addr = base_addr;
-  _curr_addr = base_addr;
 #if MODULE_TRACE
   ready_prev = false;
   mem_flag_prev = false;

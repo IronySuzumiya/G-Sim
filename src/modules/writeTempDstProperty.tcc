@@ -77,7 +77,7 @@ void SimObj::WriteTempDstProperty<v_t, e_t>::tick(void) {
       if(_ready) {
         _ready = false;
         _mem_flag = false;
-        _scratchpad->write(_data.vertex_dst_id_addr, &_mem_flag);
+        _scratchpad->write(TEMP_VPROP_ADDR_OFFSET + _data.vertex_dst_id_addr, &_mem_flag);
         _curr_addr += 4;
         _stall = STALL_MEM;
         next_state = OP_MEM_WAIT;

@@ -31,6 +31,8 @@ public:
   std::vector<Edge<e_t>> edges;
   std::vector<Edge<e_t>> in_edges;
 
+  uint64_t edge_list_offset;
+
   template<class T, class U>
   friend std::ostream& operator<<(std::ostream& os, const Vertex<T, U>& obj);
 };

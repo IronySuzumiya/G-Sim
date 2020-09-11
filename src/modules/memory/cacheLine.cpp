@@ -29,7 +29,7 @@ void SimObj::CacheLine::access(bool is_write) {
 
 
 bool SimObj::CacheLine::hit(uint64_t addr) {
-  return ((addr & ~ACCESS_MASK) == _address) && _valid;
+  return (addr == _address) && _valid;
 }
 
 
@@ -59,10 +59,14 @@ bool SimObj::CacheLine::getPrefetch() {
 
 void SimObj::CacheLine::insert(uint64_t addr, bool prefetch) {
   _lru = 0;
-  _address = (addr & ~ACCESS_MASK);
+  _address = addr;
   _valid = true;
   _dirty = false;
   _pf = prefetch;
+}
+
+void SimObj::CacheLine::writeback() {
+  _dirty = false;
 }
 
 void SimObj::CacheLine::evict() {

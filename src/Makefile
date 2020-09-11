@@ -8,6 +8,9 @@ endif
 ifdef MODULE_TRACE
 CPPFLAGS += -DMODULE_TRACE
 endif
+ifdef LARGE_GRAPH
+CPPFLAGS += -DLARGE_GRAPH
+endif
 #CPPFLAGS += -pg 
 LFLAGS += -lboost_program_options -lstdc++fs -lrt -ldramsim3
 LPATH = -L/usr/local/bin -L./modules/memory/DRAMsim3

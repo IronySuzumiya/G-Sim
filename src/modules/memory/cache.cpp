@@ -9,59 +9,81 @@
 #include <cassert>
 #include "cache.h"
 
-
-SimObj::Cache::Cache(int entries, Memory* memory) {
-  assert(memory != NULL);
-  assert(entries > 0);
+SimObj::Cache::Cache(uint64_t entries, uint64_t entry_size, uint64_t num_set_associative_way, Memory* dram) {
+  assert(dram != NULL);
+  assert((entry_size & (entry_size - 1)) == 0);
+  assert((num_set_associative_way & (num_set_associative_way - 1)) == 0);
+  assert(entries % num_set_associative_way == 0);
 
   cache.resize(entries);
   stats.resize(NUM_STATS, 0);
 
-  _memory = memory;
-}
+  _set_size = num_set_associative_way;
+  _num_sets = entries / num_set_associative_way;
 
+  _random = std::default_random_engine(static_cast<uint64_t>(time(nullptr)));
+
+  _access_mask = entry_size - 1;
+
+  _access_shift = 0;
+  while(entry_size > 1) {
+    entry_size >>= 1;
+    ++_access_shift;
+  }
+
+  _dram = dram;
+}
 
 SimObj::Cache::~Cache() {
-  _memory = NULL;
+  _dram = NULL;
 }
 
-
-uint64_t SimObj::Cache::getLRU() {
-  uint64_t i = 0;
+uint64_t SimObj::Cache::getLRU(uint64_t addr) {
+  uint64_t set_index = (addr >> _access_shift) % _num_sets;
+  uint64_t i = set_index * _set_size;
+  uint64_t pos = set_index * _set_size;
   uint64_t max = 0;
-  uint64_t pos = 0;
-  for(auto line : cache) {
-    if(line.getLRU() > max) {
-      max = line.getLRU();
+  for(auto it = cache.begin() + set_index * _set_size; it != cache.begin() + (set_index + 1) * _set_size; ++it) {
+    if(it->getLRU() > max) {
+      max = it->getLRU();
       pos = i;
     }
-    i++;
+    ++i;
   }
   return pos;
 }
 
-
-uint64_t SimObj::Cache::hit(uint64_t addr) {
-  uint64_t i = 0;
-  for(auto line : cache) {
-    if(line.hit(addr)) {
-      return i;
-    }
-    i++;
-  }
-  return i;
+uint64_t SimObj::Cache::getRandom(uint64_t addr) {
+  uint64_t set_index = (addr >> _access_shift) % _num_sets;
+  std::uniform_int_distribution<uint64_t> pos(set_index * _set_size, (set_index + 1) * _set_size - 1);
+  return pos(_random);
 }
 
+uint64_t SimObj::Cache::hit(uint64_t addr) {
+  uint64_t set_index = (addr >> _access_shift) % _num_sets;
+  uint64_t i = set_index * _set_size;
+  for(auto it = cache.begin() + set_index * _set_size; it != cache.begin() + (set_index + 1) * _set_size; ++it) {
+    if(it->hit(addr & ~_access_mask)) {
+      return i;
+    }
+    ++i;
+  }
+  return cache.size();
+}
+
+void SimObj::Cache::insert(uint64_t line, uint64_t addr, bool prefetch) {
+  cache[line].insert(addr & ~_access_mask, prefetch);
+}
 
 void SimObj::Cache::tick(void) {
   // Search through the MSHR list and see if any outstanding requests completed
   // If it is a writeback remove and do nothing
   // If it is a read insert it into the cache
-  _memory->tick();
+  //_memory->tick();
   for(auto it : mshr) {
     if(it.complete) {
       if(!it.write) {
-        uint64_t line = getLRU();
+        uint64_t line = getLRU(it.address);
         if(cache[line].getPrefetch()) {
           // When evicting line, check if it was inseted by prefetching mechanism,
           // If it was, then remove the entry from the list of prefectched addresses
@@ -74,9 +96,9 @@ void SimObj::Cache::tick(void) {
           req.complete = false;
           req.prefetch = false;
           mshr.push_front(req);
-          _memory->write(mshr.front().address, &mshr.front().complete, false);
+          _dram->write(mshr.front().address, &mshr.front().complete, false);
         }
-        cache[line].insert(it.address, it.prefetch);
+        insert(line, it.address, it.prefetch);
       }
     }
   }
@@ -84,7 +106,7 @@ void SimObj::Cache::tick(void) {
     if(it->complete) {
       it = mshr.erase(it);
     } else {
-      it++;
+      ++it;
     }
   }
   // Complete any outstanding requests:
@@ -94,7 +116,7 @@ void SimObj::Cache::tick(void) {
       *(it->second) = true;
       it = outstanding_sequential_reads.erase(it);
     } else {
-      it++;
+      ++it;
     }
   }
   // Tick all the cache lines
@@ -105,18 +127,29 @@ void SimObj::Cache::tick(void) {
 
 
 void SimObj::Cache::write(uint64_t addr, bool* complete, bool sequential) {
-  if(sequential) {
-    stats[SEQ_WRITE]++;
-    //Add Access to  
-    uint64_t line = hit(addr);
-    if(line < cache.size()) {
-      stats[HIT]++;
-      cache[line].access(true);
-      *complete = true;
+  stats[sequential? SEQ_WRITE : RAND_WRITE]++;
+  uint64_t line = hit(addr);
+  if(line < cache.size()) {
+    stats[HIT]++;
+    cache[line].access(true);
+    *complete = true;
+    if(!sequential) {
+      // Write through
+      stats[WRITEBACK]++;
+      cache[line].writeback();
+      mshr_t req;
+      req.address = cache[line].getAddr();
+      req.write = true;
+      req.complete = false;
+      req.prefetch = false;
+      mshr.push_front(req);
+      _dram->write(mshr.front().address, &mshr.front().complete, false);
     }
-    else {
+  }
+  else {
+    if(sequential) {
       stats[MISS]++;
-      line = getLRU();
+      line = getLRU(addr);
       if(cache[line].valid() && cache[line].dirty()) {
         stats[WRITEBACK]++;
         mshr_t req;
@@ -125,19 +158,16 @@ void SimObj::Cache::write(uint64_t addr, bool* complete, bool sequential) {
         req.complete = false;
         req.prefetch = false;
         mshr.push_front(req);
-        _memory->write(mshr.front().address, &mshr.front().complete, false);
+        _dram->write(mshr.front().address, &mshr.front().complete);
       }
-      cache[line].insert(addr);
+      insert(line, addr);
       cache[line].access(true);
       *complete = true;
+    } else {
+      _dram->write((addr & ~_access_mask), complete, false);
     }
   }
-  else {
-    stats[RAND_WRITE]++;
-    _memory->write(addr, complete, false);
-  }
 }
-
 
 /* 
  * SimObj::Cache::read
@@ -146,65 +176,92 @@ void SimObj::Cache::write(uint64_t addr, bool* complete, bool sequential) {
  *   If not sequential, submit a req to DRAM
  */
 void SimObj::Cache::read(uint64_t addr, bool* complete, bool sequential) {
-  if(sequential) {
-    stats[SEQ_READ]++;
-    uint64_t line = hit(addr);
-    if(line < cache.size()) {
-      stats[HIT]++;
-      cache[line].access(false);
-      *complete = true;
-    }
-    else {
-      stats[MISS]++;
-      mshr_t req;
-      //req.address = addr;
-      req.address = (addr & ~ACCESS_MASK);
-      req.write = false;
-      req.complete = false;
-      req.prefetch = false;
-      bool is_dup_read = false;
-      for (auto it : mshr) {
-        if(it.address == req.address) {
-          is_dup_read = true;
-          break;
-        }
-      }
-      if(!is_dup_read) {
-        mshr.push_front(req);
-        _memory->read(mshr.front().address, &mshr.front().complete, false);
-      }
-      outstanding_sequential_reads.push_back(std::make_pair(addr, complete));
-    }
+  stats[sequential? SEQ_READ : RAND_READ]++;
+  uint64_t line = hit(addr);
+  if(line < cache.size()) {
+    stats[HIT]++;
+    cache[line].access(false);
+    *complete = true;
   }
   else {
-    stats[RAND_READ]++;
-    _memory->read(addr, complete, false);
+    stats[MISS]++;
+    bool is_dup_read = false;
+    for (auto it : mshr) {
+      if(it.address == (addr & ~_access_mask)) {
+        is_dup_read = true;
+        break;
+      }
+    }
+    if(sequential) {
+      if(!is_dup_read) {
+        mshr_t req;
+        req.address = (addr & ~_access_mask);
+        req.write = false;
+        req.complete = false;
+        req.prefetch = false;
+        mshr.push_front(req);
+        _dram->read(mshr.front().address, &mshr.front().complete);
+      }
+      outstanding_sequential_reads.push_back(std::make_pair(addr, complete));
+    } else {
+      if(!is_dup_read) {
+        _dram->read((addr & ~_access_mask), complete, false);
+      } else {
+        outstanding_sequential_reads.push_back(std::make_pair(addr, complete));
+      }
+    }
   }
 }
 
+void SimObj::Cache::alloc(uint64_t addr, bool* complete) {
+  stats[ALLOCATE]++;
+  uint64_t line = hit(addr);
+  if(line < cache.size()) {
+    stats[HIT]++;
+    cache[line].access(false);
+    *complete = true;
+  } else {
+    stats[MISS]++;
+    line = getLRU(addr);
+    if(cache[line].valid() && cache[line].dirty()) {
+      stats[WRITEBACK]++;
+      mshr_t req;
+      req.address = cache[line].getAddr();
+      req.write = true;
+      req.complete = false;
+      req.prefetch = false;
+      mshr.push_front(req);
+      _dram->write(mshr.front().address, &mshr.front().complete, false);
+    }
+    cache[line].insert(addr);
+    cache[line].access(false);
+    *complete = true;
+  }
+}
 
 void SimObj::Cache::print_stats() {
   sim_out.write("-------------------------------------------------------------------------------\n");
-  sim_out.write("[ Cache ]\n");
+  sim_out.write("[ " + _name + " ]\n");
   sim_out.write("  HIT:              " + std::to_string(stats[HIT]) + "\n");
   sim_out.write("  MISS:             " + std::to_string(stats[MISS]) + "\n");
   sim_out.write("  SEQ READ:         " + std::to_string(stats[SEQ_READ]) + "\n");
   sim_out.write("  SEQ WRITE:        " + std::to_string(stats[SEQ_WRITE]) + "\n");
   sim_out.write("  RAND READ:        " + std::to_string(stats[RAND_READ]) + "\n");
   sim_out.write("  RAND WRITE:       " + std::to_string(stats[RAND_WRITE]) + "\n");
+  sim_out.write("  ALLOCATE:         " + std::to_string(stats[ALLOCATE]) + "\n");
   sim_out.write("  PREFETCH:         " + std::to_string(stats[PREFETCH]) + "\n");
   sim_out.write("  WRITEBACK:        " + std::to_string(stats[WRITEBACK]) + "\n");
-  /*SimObj::sim_out.write("Cache,");
+}
+
+void SimObj::Cache::print_stats_csv() {
+  SimObj::sim_out.write(_name + ",");
   for(auto stat : stats) {
     SimObj::sim_out.write(std::to_string(stat)+",");
   }
-  SimObj::sim_out.write("\n");*/
+  SimObj::sim_out.write("\n");
 }
-
 
 void SimObj::Cache::reset() {
   // Reset the stat counters:
   for(auto & stat : stats) stat = 0;
 }
-
-

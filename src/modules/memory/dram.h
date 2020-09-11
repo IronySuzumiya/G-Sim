@@ -20,7 +20,7 @@ class DRAM : public Memory {
 private:
   std::list<std::tuple<uint64_t, bool*, bool>> _write_queue;
   std::list<std::tuple<uint64_t, bool*, bool>> _read_queue;
-  std::list<std::tuple<uint64_t, bool*, bool, bool>> _pending_queue;
+  std::list<std::tuple<uint64_t, bool*, bool>> _pending_queue;
 
   std::function<void(uint64_t)> write_cb;
   std::function<void(uint64_t)> read_cb;
@@ -36,8 +36,8 @@ public:
   ~DRAM();
 
   void tick(void);
-  void write(uint64_t addr, bool* complete, bool sequential=true);
-  void read(uint64_t addr, bool* complete, bool sequential=true);
+  void write(uint64_t addr, bool* complete);
+  void read(uint64_t addr, bool* complete);
 
   void print_stats();
   void reset();

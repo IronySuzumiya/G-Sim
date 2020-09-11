@@ -17,6 +17,7 @@
 
 #include "module.h"
 #include "memory.h"
+#include "scratchpad.h"
 
 namespace SimObj {
 
