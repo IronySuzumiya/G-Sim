@@ -7,6 +7,7 @@ void GraphMat::CC<v_t, e_t>::initialize(Utility::Graph<v_t, e_t>& graph, std::li
       max = graph.vertex[i].edges.size();
       it = i;
     }
+    graph.vertex[i].property.edge_list_offset = graph.vertex[i].edge_list_offset;
   } 
   std::cout << "Starting @ vertex " << it << "\n";
   graph.vertex[it].property.component = 0;

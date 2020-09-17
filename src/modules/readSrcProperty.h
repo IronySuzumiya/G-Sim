@@ -86,8 +86,8 @@ public:
   ReadSrcProperty(Memory* dram, std::list<uint64_t>* process, Utility::Graph<v_t, e_t>* graph, std::string name, uint64_t id);
   ~ReadSrcProperty();
 
-  void tick(void);
-  void reset(void);
+  void tick(void) override;
+  void reset(void) override;
 };
 
 } // namespace SimObj

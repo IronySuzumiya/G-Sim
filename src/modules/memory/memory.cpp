@@ -125,6 +125,11 @@ void SimObj::Memory::alloc(uint64_t addr, bool* complete) {
   _req_queue.push(req);
 }
 
+void SimObj::Memory::prefetch(uint64_t addr, bool* complete) {
+  SimObj::MemRequest req(addr, complete, _access_latency, MEM_PREFETCH);
+  _req_queue.push(req);
+}
+
 void SimObj::Memory::print_stats() {
 
 }

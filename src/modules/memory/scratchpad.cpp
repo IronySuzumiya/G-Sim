@@ -26,6 +26,9 @@ void SimObj::Scratchpad::tick() {
             case MEM_ALLOC:
               _mem->alloc(it->get_addr(), it->get_complete_ptr());
               break;
+            case MEM_PREFETCH:
+              _mem->prefetch(it->get_addr(), it->get_complete_ptr());
+              break;
             default: assert(false);
           }
           it->set_status(MEM_PROCESSING);

@@ -57,6 +57,8 @@ SimObj::ReadSrcEdges<v_t, e_t>::~ReadSrcEdges() {
 
 template<class v_t, class e_t>
 void SimObj::ReadSrcEdges<v_t, e_t>::tick(void) {
+  static uint64_t edge_size = e_t().size;
+
   _tick++;
   op_t next_state = _state;
 #ifdef MODULE_TRACE
@@ -75,7 +77,7 @@ void SimObj::ReadSrcEdges<v_t, e_t>::tick(void) {
         if(_graph->vertex[_data.vertex_id].edges.size() != 0) {
           _data_set = false;
           _mem_flag = false;
-          _scratchpad->read(EDGE_LIST_ADDR_OFFSET + (_graph->vertex[_data.vertex_id].edge_list_offset + _edge_ptr) * EDGE_SIZE, &_mem_flag);
+          _scratchpad->read(EDGE_LIST_ADDR_OFFSET + (_graph->vertex[_data.vertex_id].edge_list_offset + _edge_ptr) * edge_size, &_mem_flag);
           _stall = STALL_MEM;
           next_state = OP_MEM_WAIT;
           _items_processed += _graph->vertex[_data.vertex_id].edges.size();
@@ -113,7 +115,7 @@ void SimObj::ReadSrcEdges<v_t, e_t>::tick(void) {
           if(_edge_ptr < _graph->vertex[_data.vertex_id].edges.size()) {
             _data_set = false;
             _mem_flag = false;
-            _scratchpad->read(EDGE_LIST_ADDR_OFFSET + (_graph->vertex[_data.vertex_id].edge_list_offset + _edge_ptr) * EDGE_SIZE, &_mem_flag);
+            _scratchpad->read(EDGE_LIST_ADDR_OFFSET + (_graph->vertex[_data.vertex_id].edge_list_offset + _edge_ptr) * edge_size, &_mem_flag);
             _curr_addr += 4;
             _stall = STALL_MEM;
             next_state = OP_MEM_WAIT;

@@ -15,9 +15,11 @@ namespace GraphMat {
 
 class bfs_t {
 public:
-  static const uint32_t size = 4;
+  static const uint32_t size = 8;
+  uint32_t edge_list_offset;
   bool visited;
   bfs_t() {
+    edge_list_offset = 0;
     visited = false;
   }
   friend std::ostream& operator<<(std::ostream& os, const bfs_t& obj) {
@@ -51,19 +53,19 @@ public:
   ~BFS() { /* Do Nothing */ }
 
   // Init
-  void initialize(Utility::Graph<v_t, e_t>& graph, std::list<uint64_t>* curr); 
+  void initialize(Utility::Graph<v_t, e_t>& graph, std::list<uint64_t>* curr) override; 
 
   // Do Every Iteration
-  void do_every_iteration(Utility::Graph<v_t, e_t>& graph, std::list<uint64_t>* curr); 
+  void do_every_iteration(Utility::Graph<v_t, e_t>& graph, std::list<uint64_t>* curr) override; 
 
   // Reduction Function
-  bool reduce(v_t& a, const v_t& b);
+  bool reduce(v_t& a, const v_t& b) override;
 
   // Process Edge Function
-  void process_edge(v_t& message, const e_t& edge, const v_t& vertex);
+  void process_edge(v_t& message, const e_t& edge, const v_t& vertex) override;
 
   // Apply
-  bool apply(const v_t& scratch, v_t& dram);
+  bool apply(const v_t& scratch, v_t& dram) override;
 }; // class BFS
 
 }; // namespace GraphMat

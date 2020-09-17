@@ -85,8 +85,8 @@ public:
   ReadSrcEdges(Memory* dram, Utility::Graph<v_t, e_t>* graph, std::string name, uint64_t id);
   ~ReadSrcEdges();
 
-  void tick(void);
-  void ready(Utility::pipeline_data<v_t, e_t> data);
+  void tick(void) override;
+  void ready(Utility::pipeline_data<v_t, e_t> data) override;
 };
 
 } // namespace SimObj

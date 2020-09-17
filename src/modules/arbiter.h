@@ -44,14 +44,14 @@ public:
   Arbiter();
   ~Arbiter();
 
-  void print_stats();
-  void print_stats_csv();
-  void clear_stats();
+  void print_stats() override;
+  void print_stats_csv() override;
+  void clear_stats() override;
 
-  stall_t is_stalled(void);
-  void ready(Utility::pipeline_data<v_t, e_t> data);
+  stall_t is_stalled(void) override;
+  void ready(Utility::pipeline_data<v_t, e_t> data) override;
 
-  void tick(void);
+  void tick(void) override;
 };
 
 } // namespace SimObj

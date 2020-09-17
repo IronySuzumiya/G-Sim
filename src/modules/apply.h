@@ -69,7 +69,7 @@ public:
   Apply(int delay_cycles, GraphMat::GraphApp<v_t, e_t>* app, std::string name, uint64_t id);
   ~Apply();
 
-  void tick(void);
+  void tick(void) override;
 };
 
 } // namespace SimObj

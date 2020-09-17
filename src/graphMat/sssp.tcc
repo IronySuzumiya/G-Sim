@@ -7,6 +7,7 @@ void GraphMat::SSSP<v_t, e_t>::initialize(Utility::Graph<v_t, e_t>& graph, std::
       max = graph.vertex[i].edges.size();
       it = i;
     }
+    graph.vertex[i].property.edge_list_offset = graph.vertex[i].edge_list_offset;
   } 
   std::cout << "Starting @ vertex " << it << "\n";
   graph.vertex[it].property.distance = 0;
@@ -31,7 +32,7 @@ bool GraphMat::SSSP<v_t, e_t>::reduce(v_t& scratch, const v_t& message) {
 template<class v_t, class e_t>
 void GraphMat::SSSP<v_t, e_t>::process_edge(v_t& message, const e_t& edge, const v_t& vertex) {
   // Process Edge
-  message.distance = vertex.distance + (uint64_t)edge;
+  message.distance = vertex.distance + (uint32_t)edge.weight;
 }
 
 template<class v_t, class e_t>

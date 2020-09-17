@@ -12,6 +12,21 @@
 
 namespace GraphMat {
 
+class e_t {
+public:
+  static const uint32_t size = 8;
+  uint32_t dst_id;
+  float weight;
+  e_t() {
+    dst_id = 0;
+    weight = 0.0;
+  }
+  friend std::ostream& operator<<(std::ostream& os, const e_t& obj) {
+    os << obj.dst_id << ", " << obj.weight;
+    return os;
+  }
+};
+
 template<class v_t, class e_t>
 class GraphApp {
 protected:

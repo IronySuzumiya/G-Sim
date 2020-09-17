@@ -75,7 +75,7 @@ public:
   ReadDstProperty(Memory* dram, Utility::Graph<v_t, e_t>* graph, std::string name, uint64_t id, uint64_t reader_id);
   ~ReadDstProperty();
 
-  void tick(void);
+  void tick(void) override;
 };
 
 } // namespace SimObj

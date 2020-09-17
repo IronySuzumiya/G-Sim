@@ -9,13 +9,6 @@
 
 namespace SimObj {
 
-enum scratchpad_op_t {
-  SP_READ,
-  SP_WRITE,
-  SP_ALLOC,
-  SP_NUM_OPS
-};
-
 class Scratchpad : public Memory {
 private:
   Memory *_mem;

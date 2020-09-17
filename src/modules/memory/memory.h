@@ -18,6 +18,7 @@ enum mem_op_t {
   MEM_READ,
   MEM_WRITE,
   MEM_ALLOC,
+  MEM_PREFETCH,
   MEM_NUM_OPS
 };
 
@@ -72,6 +73,7 @@ public:
   virtual void write(uint64_t addr, bool* complete, bool sequential=true);
   virtual void read(uint64_t addr, bool* complete, bool sequential=true);
   virtual void alloc(uint64_t addr, bool* complete);
+  virtual void prefetch(uint64_t addr, bool *complete);
   virtual void print_stats();
   virtual void print_stats_csv();
   virtual void reset();

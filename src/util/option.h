@@ -40,12 +40,12 @@ namespace Utility {
     public:
       std::string logfile = "";
 
-      // Cache options
+      // Cache Options
       unsigned long long int cache_line_data_width = 64; // Bytes
-      unsigned long long int cache_num_lines = 1024;
+      unsigned long long int cache_num_lines = 2048;
       unsigned long long int cache_num_set_associative_way = 8;
       
-      // Scratchpad options
+      // Scratchpad Options
       unsigned long long int scratchpad_line_data_width = 64; // Bytes
       unsigned long long int scratchpad_num_lines = 16384; // lines
       unsigned long long int scratchpad_num_set_associative_way = 8;
@@ -57,9 +57,14 @@ namespace Utility {
       unsigned long long int num_iter = 10000;
       unsigned long long int num_pipelines = 1;
       unsigned long long int num_dst_readers = 4;
+      std::string app = "";
+
+      // Prefetch Options
+      uint64_t prefetch_batch_size = 10;
+
+      // ReadGrpah Options
       int shouldInit = 0; // Used for the readGraph
       std::string graph_path = "";
-      std::string app = "";
       std::string result = "";
 
       std::vector<std::string> token;
@@ -104,6 +109,11 @@ namespace Utility {
             ("num_dst_readers", po::value<unsigned long long int>(&num_dst_readers), "the number of readVertexProperty  modules")
           ;
 
+          po::options_description prefetch("Prefetch Options");
+          prefetch.add_options()
+            ("prefetch_batch_size", po::value<uint64_t>(&prefetch_batch_size), "size of prefetch batch in number of entries")
+          ;
+
           po::options_description graph("ReadGrpah Options");
           graph.add_options()
             ("should_init", po::value<int>(&shouldInit), "graph needs to be initialized")
@@ -117,6 +127,7 @@ namespace Utility {
           all_options.add(cache);
           all_options.add(scratch);
           all_options.add(sim);
+          all_options.add(prefetch);
           all_options.add(graph);
 
 

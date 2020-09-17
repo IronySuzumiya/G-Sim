@@ -12,7 +12,7 @@
 
 
 template<class v_t, class e_t>
-SimObj::WriteVertexProperty<v_t, e_t>::WriteVertexProperty(Memory* dram, std::list<uint64_t>* process, Utility::Graph<v_t, e_t>* graph, uint64_t base_addr, std::string name, uint64_t id) {
+SimObj::WriteVertexProperty<v_t, e_t>::WriteVertexProperty(Memory* dram, std::list<uint64_t>* process, Utility::Graph<v_t, e_t>* graph, std::string name, uint64_t id) {
   assert(dram != NULL);
   assert(graph != NULL);
   assert(process != NULL);
@@ -25,8 +25,6 @@ SimObj::WriteVertexProperty<v_t, e_t>::WriteVertexProperty(Memory* dram, std::li
   _mem_flag = false;
   _state = OP_WAIT;
   _throughput = 0;
-  _base_addr = base_addr;
-  _curr_addr = base_addr;
 #if MODULE_TRACE
   ready_prev = false;
   mem_flag_prev = false;

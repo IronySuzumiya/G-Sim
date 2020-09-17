@@ -73,7 +73,7 @@ public:
   Reduce(int delay_cycles, GraphMat::GraphApp<v_t, e_t>* app, std::string name, uint64_t id);
   ~Reduce();
 
-  void tick(void);
+  void tick(void) override;
 };
 
 } // namespace SimObj

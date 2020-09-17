@@ -15,6 +15,10 @@ SimObj::Cache::Cache(uint64_t entries, uint64_t entry_size, uint64_t num_set_ass
   assert((num_set_associative_way & (num_set_associative_way - 1)) == 0);
   assert(entries % num_set_associative_way == 0);
 
+  _tick = 0;
+
+  //conflict_insert_queue_max_len = 0;
+
   cache.resize(entries);
   stats.resize(NUM_STATS, 0);
 
@@ -80,31 +84,65 @@ void SimObj::Cache::tick(void) {
   // If it is a writeback remove and do nothing
   // If it is a read insert it into the cache
   //_memory->tick();
-  for(auto it : mshr) {
-    if(it.complete) {
-      if(!it.write) {
-        uint64_t line = getLRU(it.address);
-        if(cache[line].getPrefetch()) {
-          // When evicting line, check if it was inseted by prefetching mechanism,
-          // If it was, then remove the entry from the list of prefectched addresses
-        }
-        if(cache[line].valid() && cache[line].dirty()) {
-          stats[WRITEBACK]++;
-          mshr_t req;
-          req.address = cache[line].getAddr();
-          req.write = true;
-          req.complete = false;
-          req.prefetch = false;
-          mshr.push_front(req);
-          _dram->write(mshr.front().address, &mshr.front().complete, false);
-        }
-        insert(line, it.address, it.prefetch);
+  _tick++;
+  // Tick all the cache lines
+  for(auto & line : cache) {
+    line.tick();
+  }
+  #if 0
+  for(auto it = conflict_insert_queue.begin(); it != conflict_insert_queue.end(); ) {
+    uint64_t line = getLRU(*it);
+    if(cache[line].getLRU() != 0) {
+      if(cache[line].getPrefetch()) {
+        // When evicting line, check if it was inseted by prefetching mechanism,
+        // If it was, then remove the entry from the list of prefectched addresses
       }
+      if(cache[line].valid() && cache[line].dirty()) {
+        stats[WRITEBACK]++;
+        mshr_t req;
+        req.address = cache[line].getAddr();
+        req.write = true;
+        req.complete = false;
+        req.prefetch = false;
+        mshr.push_front(req);
+        _dram->write(mshr.front().address, &mshr.front().complete, false);
+      }
+      insert(line, *it);
+      it = conflict_insert_queue.erase(it);
+    } else {
+      ++it;
     }
   }
+  #endif
   for(auto it = mshr.begin(); it != mshr.end(); ) {
     if(it->complete) {
+      if(!it->write) {
+        uint64_t line = getLRU(it->address);
+        if(cache[line].getLRU() != 0) {
+          if(cache[line].getPrefetch()) {
+            // When evicting line, check if it was inseted by prefetching mechanism,
+            // If it was, then remove the entry from the list of prefectched addresses
+          }
+          if(cache[line].valid() && cache[line].dirty()) {
+            stats[WRITEBACK]++;
+            mshr_t req;
+            req.address = cache[line].getAddr();
+            req.write = true;
+            req.complete = false;
+            req.prefetch = false;
+            mshr.push_front(req);
+            _dram->write(mshr.front().address, &mshr.front().complete, false);
+          }
+          insert(line, it->address, it->prefetch);
+        } else {
+          //conflict_insert_queue.push_back(it->address);
+          //conflict_insert_queue_max_len = std::max(conflict_insert_queue_max_len, conflict_insert_queue.size());
+          assert(false);
+        }
+      }
       it = mshr.erase(it);
+      // only one req dealt each cycle
+      break;
     } else {
       ++it;
     }
@@ -119,12 +157,7 @@ void SimObj::Cache::tick(void) {
       ++it;
     }
   }
-  // Tick all the cache lines
-  for(auto & line : cache) {
-    line.tick();
-  }
 }
-
 
 void SimObj::Cache::write(uint64_t addr, bool* complete, bool sequential) {
   stats[sequential? SEQ_WRITE : RAND_WRITE]++;
@@ -217,11 +250,9 @@ void SimObj::Cache::alloc(uint64_t addr, bool* complete) {
   stats[ALLOCATE]++;
   uint64_t line = hit(addr);
   if(line < cache.size()) {
-    stats[HIT]++;
     cache[line].access(false);
     *complete = true;
   } else {
-    stats[MISS]++;
     line = getLRU(addr);
     if(cache[line].valid() && cache[line].dirty()) {
       stats[WRITEBACK]++;
@@ -239,6 +270,34 @@ void SimObj::Cache::alloc(uint64_t addr, bool* complete) {
   }
 }
 
+void SimObj::Cache::prefetch(uint64_t addr, bool* complete) {
+  stats[PREFETCH]++;
+  uint64_t line = hit(addr);
+  if(line < cache.size()) {
+    cache[line].access(false);
+    *complete = true;
+  }
+  else {
+    bool is_dup_read = false;
+    for (auto it : mshr) {
+      if(it.address == (addr & ~_access_mask)) {
+        is_dup_read = true;
+        break;
+      }
+    }
+    if(!is_dup_read) {
+      mshr_t req;
+      req.address = (addr & ~_access_mask);
+      req.write = false;
+      req.complete = false;
+      req.prefetch = true;
+      mshr.push_front(req);
+      _dram->read(mshr.front().address, &mshr.front().complete);
+    }
+    outstanding_sequential_reads.push_back(std::make_pair(addr, complete));
+  }
+}
+
 void SimObj::Cache::print_stats() {
   sim_out.write("-------------------------------------------------------------------------------\n");
   sim_out.write("[ " + _name + " ]\n");
@@ -251,17 +310,20 @@ void SimObj::Cache::print_stats() {
   sim_out.write("  ALLOCATE:         " + std::to_string(stats[ALLOCATE]) + "\n");
   sim_out.write("  PREFETCH:         " + std::to_string(stats[PREFETCH]) + "\n");
   sim_out.write("  WRITEBACK:        " + std::to_string(stats[WRITEBACK]) + "\n");
+  //sim_out.write("  MAX CONFLICT:     " + std::to_string(conflict_insert_queue_max_len) + "\n");
 }
 
 void SimObj::Cache::print_stats_csv() {
-  SimObj::sim_out.write(_name + ",");
+  sim_out.write(_name + ",");
   for(auto stat : stats) {
-    SimObj::sim_out.write(std::to_string(stat)+",");
+    sim_out.write(std::to_string(stat)+",");
   }
-  SimObj::sim_out.write("\n");
+  //sim_out.write(std::to_string(conflict_insert_queue_max_len));
+  sim_out.write("\n");
 }
 
 void SimObj::Cache::reset() {
   // Reset the stat counters:
   for(auto & stat : stats) stat = 0;
+  //conflict_insert_queue_max_len = 0;
 }

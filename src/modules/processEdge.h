@@ -69,9 +69,9 @@ public:
   ProcessEdge(int delay_cycles, GraphMat::GraphApp<v_t, e_t>* graph_app, std::string name, uint64_t id);
   ~ProcessEdge();
 
-  stall_t is_stalled(void);
+  stall_t is_stalled(void) override;
 
-  void tick(void);
+  void tick(void) override;
 };
 
 } // namespace SimObj

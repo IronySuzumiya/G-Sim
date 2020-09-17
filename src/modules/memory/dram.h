@@ -18,9 +18,9 @@ namespace SimObj {
 
 class DRAM : public Memory {
 private:
-  std::list<std::tuple<uint64_t, bool*, bool>> _write_queue;
-  std::list<std::tuple<uint64_t, bool*, bool>> _read_queue;
-  std::list<std::tuple<uint64_t, bool*, bool>> _pending_queue;
+  std::list<std::tuple<uint64_t, bool*, bool, uint64_t>> _write_queue;
+  std::list<std::tuple<uint64_t, bool*, bool, uint64_t>> _read_queue;
+  std::list<std::tuple<uint64_t, bool*, bool, uint64_t>> _pending_queue;
 
   std::function<void(uint64_t)> write_cb;
   std::function<void(uint64_t)> read_cb;
@@ -35,12 +35,14 @@ public:
   DRAM(uint64_t access_latency=0, uint64_t write_latency=0);
   ~DRAM();
 
-  void tick(void);
-  void write(uint64_t addr, bool* complete);
-  void read(uint64_t addr, bool* complete);
+  void tick(void) override;
+  void write(uint64_t addr, bool* complete, bool sequential=true) override;
+  void read(uint64_t addr, bool* complete, bool sequential=true) override;
+  void alloc(uint64_t addr, bool* complete) override;
+  void prefetch(uint64_t addr, bool* complete) override;
 
-  void print_stats();
-  void reset();
+  void print_stats() override;
+  void reset() override;
 }; // class DRAM
 
 } // namespace SimObj

@@ -19,8 +19,10 @@ namespace GraphMat {
 class sssp_t {
 public:
   static const uint32_t size = 8;
-  uint64_t distance;
+  uint32_t edge_list_offset;
+  uint32_t distance;
   sssp_t() {
+    edge_list_offset = 0;
     distance = ~0;
   }
   friend std::ostream& operator<<(std::ostream& os, const sssp_t& obj) {
@@ -54,19 +56,19 @@ public:
   ~SSSP() { /* Do Nothing */ }
 
   // Init
-  void initialize(Utility::Graph<v_t, e_t>& graph, std::list<uint64_t>* curr);
+  void initialize(Utility::Graph<v_t, e_t>& graph, std::list<uint64_t>* curr) override;
 
   // Function to do every iteration of the graph application
-  void do_every_iteration(Utility::Graph<v_t, e_t>& graph, std::list<uint64_t>* curr);
+  void do_every_iteration(Utility::Graph<v_t, e_t>& graph, std::list<uint64_t>* curr) override;
 
   // Reduction Function
-  bool reduce(v_t& a, const v_t& b);
+  bool reduce(v_t& a, const v_t& b) override;
 
   // Process Edge Function
-  void process_edge(v_t& message, const e_t& edge, const v_t& vertex);
+  void process_edge(v_t& message, const e_t& edge, const v_t& vertex) override;
 
   // Apply
-  bool apply(const v_t& scratch, v_t& dram);
+  bool apply(const v_t& scratch, v_t& dram) override;
 
 }; // class SSSP
 

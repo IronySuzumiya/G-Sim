@@ -16,8 +16,9 @@
 namespace Utility {
 
 template<class e_t>
-Edge<e_t>::Edge(e_t init, uint64_t src, uint64_t dst) {
-  this->property = init;
+Edge<e_t>::Edge(float init, uint64_t src, uint64_t dst) {
+  this->property.weight = init;
+  this->property.dst_id = dst;
   this->src = src;
   this->dst = dst;
 }

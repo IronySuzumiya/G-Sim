@@ -1,7 +1,8 @@
 #include <cassert>
 
 template<class v_t, class e_t>
-SimObj::Pipeline<v_t, e_t>::Pipeline(uint64_t pipeline_id, const Utility::Options opt, Utility::Graph<v_t, e_t>* graph, std::list<uint64_t>* process, GraphMat::GraphApp<v_t, e_t>* application, Memory* cache, Memory* dram, Crossbar<v_t, e_t>* crossbar, int num_dst_readers) {
+SimObj::Pipeline<v_t, e_t>::Pipeline(uint64_t pipeline_id, const Utility::Options opt, Utility::Graph<v_t, e_t>* graph, std::list<uint64_t>* process,
+                                    GraphMat::GraphApp<v_t, e_t>* application, Memory* cache, Memory* dram, Crossbar<v_t, e_t>* crossbar, int num_dst_readers) {
   // Assert inputs are OK
   assert(graph != NULL);
   assert(application != NULL);
@@ -10,6 +11,8 @@ SimObj::Pipeline<v_t, e_t>::Pipeline(uint64_t pipeline_id, const Utility::Option
   assert(crossbar != NULL);
   assert(process != NULL);
   assert(num_dst_readers > 0);
+
+  _graph = graph;
 
   // Allocate Scratchpad
   scratchpad_map = new std::map<uint64_t, Utility::pipeline_data<v_t, e_t>>;
@@ -38,7 +41,7 @@ SimObj::Pipeline<v_t, e_t>::Pipeline(uint64_t pipeline_id, const Utility::Option
   p7 = new SimObj::Reduce<v_t, e_t>(1, application, "Reduce", _id);
   p8 = new SimObj::WriteTempDstProperty<v_t, e_t>(scratchpad, p5, scratchpad_map, apply, "WriteTempDstProperty", _id);
 
-  a1 = new SimObj::ReadVertexProperty<v_t, e_t>(cache, apply, graph, (uint64_t)apply, "ReadVertexProperty", _id);
+  a1 = new SimObj::ReadVertexProperty<v_t, e_t>(cache, apply, graph, "ReadVertexProperty", _id);
   a2 = new SimObj::ReadTempVertexProperty<v_t, e_t>(scratchpad, scratchpad_map, "ReadTempVertexProperty", _id);
   a3 = new SimObj::Apply<v_t, e_t>(1, application, "Apply", _id);
   a4 = new SimObj::WriteVertexProperty<v_t, e_t>(cache, process, graph, "WriteVertexProperty", _id);
@@ -133,6 +136,10 @@ SimObj::Pipeline<v_t, e_t>::Pipeline(uint64_t pipeline_id, const Utility::Option
   a4->set_name("WriteVertexProperty " + std::to_string(pipeline_id));
 
   scratchpad->set_name("Scratchpad " + std::to_string(pipeline_id));
+
+  _scratchpad_entry_size = opt.scratchpad_line_data_width;
+  _num_edges_per_entry = _scratchpad_entry_size / e_t().size;
+  _num_pipelines = opt.num_pipelines;
 }
 
 template<class v_t, class e_t>
@@ -178,6 +185,8 @@ SimObj::Pipeline<v_t, e_t>::~Pipeline() {
 
   process = NULL;
   crossbar = NULL;
+
+  _graph = NULL;
 }
 
 template<class v_t, class e_t>
@@ -246,13 +255,18 @@ void SimObj::Pipeline<v_t, e_t>::apply_ready() {
 
 template<class v_t, class e_t>
 void SimObj::Pipeline<v_t, e_t>::print_debug() {
+#if !defined(APP_PR)
   bool pvr = false;
   for(auto mod = parallel_vertex_readers.begin(); mod != parallel_vertex_readers.end(); mod++) {
     if((*mod)->busy()) {
       pvr = true;
     }
   }
-  std::cout << "[ Pipeline " << _id << " ] " << " p1.busy() " << p1->busy() << ", p2.busy() " << p2->busy() << ", p3.busy() " << pvr;
+#endif
+  std::cout << "[ Pipeline " << _id << " ] " << " p1.busy() " << p1->busy() << ", p2.busy() " << p2->busy();
+#if !defined(APP_PR)
+  std::cout << ", p3.busy() " << pvr;
+#endif
   std::cout << ", p4.busy() " << p4->busy() << ", p5.busy() " << p5->busy() << ", p6.busy() " << p6->busy() << ", p7.busy() " << p7->busy() << ", p8.busy() " << p8->busy();
   std::cout << ", a1.busy() " << a1->busy() << ", a2.busy() " << a2->busy() << ", a3.busy() " << a3->busy() << ", a4.busy() " << a4->busy();
   std::cout << "\n" << std::flush;
@@ -326,4 +340,27 @@ void SimObj::Pipeline<v_t, e_t>::clear_stats() {
   a4->clear_stats();
 
   scratchpad->reset();
+}
+
+template<class v_t, class e_t>
+void SimObj::Pipeline<v_t, e_t>::prefetch_edges(uint64_t v_start, uint64_t v_end, bool **prefetch_signal_list, uint64_t offset) {
+  //uint64_t i = v_start + ((_num_pipelines + (_id - (v_start % _num_pipelines))) % _num_pipelines);
+  int tmp = v_start;
+  while((tmp - _id) % _num_pipelines) {
+    ++tmp;
+  }
+  for(uint64_t i = (uint64_t)tmp; i < v_end; i += _num_pipelines) {
+    uint64_t start_edge = _graph->vertex[i].edge_list_offset;
+    uint64_t last_edge = start_edge + _graph->vertex[i].edges.size() - 1;
+    uint64_t prefetch_start_entry_id = start_edge / _num_edges_per_entry;
+    uint64_t prefetch_last_entry_id = last_edge / _num_edges_per_entry;
+    for(uint64_t j = prefetch_start_entry_id, k = 0; j <= prefetch_last_entry_id; ++j, ++k) {
+      scratchpad->prefetch(EDGE_LIST_ADDR_OFFSET + j * _scratchpad_entry_size, &prefetch_signal_list[i - offset][k]);
+    }
+  }
+}
+
+template<class v_t, class e_t>
+void SimObj::Pipeline<v_t, e_t>::print_scratchpad_stats() {
+  scratchpad->print_stats();
 }

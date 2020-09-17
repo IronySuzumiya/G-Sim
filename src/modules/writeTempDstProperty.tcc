@@ -97,11 +97,7 @@ void SimObj::WriteTempDstProperty<v_t, e_t>::tick(void) {
 #ifdef MODULE_TRACE
         mem_out_curr = _data.vertex_temp_dst_data;
 #endif
-
-//#ifndef APP_PR
-      _apply->push_back(_data.vertex_dst_id);
-//#endif
-        
+        _apply->push_back(_data.vertex_dst_id);
         _edges_written++;
         Utility::pipeline_data<v_t, e_t> temp_data = _cau->signal();
         assert(temp_data.vertex_id == _data.vertex_id);

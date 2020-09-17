@@ -10,7 +10,7 @@ GRAPHS_LARGE=('citationCiteseer' 'amazon0302')
 #GRAPHS_LARGE=('soc_Slashdot0902' 'orani678' 'amazon0302' 'G42')
 
 for app in "${APP[@]}"; do
-  make clean && make LARGE_GRAPH=1 ${app}
+  make clean && make ${app}
   for graph in "${GRAPHS[@]}"; do
     for index in "$(seq 0 ${#PL[@]})"; do
       pipeline=${PL[$index]}
@@ -33,6 +33,7 @@ for app in "${APP[@]}"; do
       #mv dramsim3epoch.json ${fbase}_dramsim3epoch.json
     done
   done
+  make clean && make LARGE_GRAPH=1 ${app}
   for graph in "${GRAPHS_LARGE[@]}"; do
     for index in "$(seq 0 ${#PL[@]})"; do
       pipeline=${PL[$index]}

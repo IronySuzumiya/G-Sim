@@ -1,9 +1,10 @@
 template<class v_t, class e_t>
 void GraphMat::PR<v_t, e_t>::initialize(Utility::Graph<v_t, e_t>& graph, std::list<uint64_t>* curr) {
   for(uint64_t i = 0; i < graph.vertex.size(); i++) {
-    curr->push_back(i);
+    //curr->push_back(i);
     graph.vertex[i].property.degree = graph.vertex[i].edges.size();
     graph.vertex[i].property.pageRank = 1.0;///(float)graph.vertex.size();
+    graph.vertex[i].property.edge_list_offset = graph.vertex[i].edge_list_offset;
   }
 }
 

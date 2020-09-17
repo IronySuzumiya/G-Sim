@@ -21,7 +21,7 @@ public:
   uint64_t dst;
   uint64_t src;
 
-  Edge(e_t init, uint64_t src, uint64_t dst);
+  Edge(float init, uint64_t src, uint64_t dst);
 };
 
 template<class v_t, class e_t>

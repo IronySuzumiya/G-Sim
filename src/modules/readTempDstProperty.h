@@ -73,7 +73,7 @@ public:
   ReadTempDstProperty(Memory* scratchpad, std::map<uint64_t, Utility::pipeline_data<v_t, e_t>>* scratch_mem, std::string name, uint64_t id);
   ~ReadTempDstProperty();
 
-  void tick(void);
+  void tick(void) override;
 };
 
 } // namespace SimObj

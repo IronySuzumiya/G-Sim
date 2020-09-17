@@ -80,7 +80,7 @@ public:
   WriteTempDstProperty(Memory* scratchpad, ControlAtomicUpdate<v_t, e_t>* cau, std::map<uint64_t, Utility::pipeline_data<v_t, e_t>>* scratch_mem, std::list<uint64_t>* apply, std::string name, uint64_t id);
   ~WriteTempDstProperty();
 
-  void tick(void);
+  void tick(void) override;
   //void print_stats(void);
   //void print_stats_csv(void);
 };

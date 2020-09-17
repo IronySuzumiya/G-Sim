@@ -73,14 +73,14 @@ private:
   bool dependency();
 
 public:
-  void print_stats();
-  void print_stats_csv();
-  void clear_stats();
+  void print_stats() override;
+  void print_stats_csv() override;
+  void clear_stats() override;
 
   ControlAtomicUpdate(std::string name, uint64_t id);
   ~ControlAtomicUpdate();
 
-  void tick(void);
+  void tick(void) override;
   Utility::pipeline_data<v_t, e_t> signal();
   void debug(void);
 };

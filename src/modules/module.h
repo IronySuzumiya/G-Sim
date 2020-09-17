@@ -20,12 +20,6 @@
 #define TEMP_VPROP_ADDR_OFFSET 0x1000000
 #define EDGE_LIST_ADDR_OFFSET 0x2000000
 
-#ifdef APP_PR
-#define EDGE_SIZE 4
-#else
-#define EDGE_SIZE 8
-#endif
-
 namespace SimObj {
 
 enum stall_t {

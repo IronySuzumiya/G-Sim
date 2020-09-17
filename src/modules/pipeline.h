@@ -73,13 +73,19 @@ private:
   SimObj::Apply<v_t, e_t>* a3;
   SimObj::WriteVertexProperty<v_t, e_t>* a4;
 
+  Utility::Graph<v_t, e_t>* _graph;
 
   uint64_t _tick;
   int _id;
 
+  uint64_t _num_edges_per_entry;
+  uint64_t _scratchpad_entry_size;
+  uint64_t _num_pipelines;
+
 public:
   // Constructor:
-  Pipeline(uint64_t pipeline_id, const Utility::Options opt, Utility::Graph<v_t, e_t>* graph, std::list<uint64_t>* process, GraphMat::GraphApp<v_t, e_t>* application, Memory* cache, Memory* dram, Crossbar<v_t, e_t>* crossbar, int num_dst_readers);
+  Pipeline(uint64_t pipeline_id, const Utility::Options opt, Utility::Graph<v_t, e_t>* graph, std::list<uint64_t>* process,
+          GraphMat::GraphApp<v_t, e_t>* application, Memory* cache, Memory* dram, Crossbar<v_t, e_t>* crossbar, int num_dst_readers);
 
   // Destructor:
   ~Pipeline();
@@ -124,6 +130,9 @@ public:
     scratchpad_map->clear();
   }
 
+  void prefetch_edges(uint64_t v_start, uint64_t v_end, bool **prefetch_signal_list, uint64_t offset);
+
+  void print_scratchpad_stats();
 }; // class Pipeline
 
 }; // namespace SimObj

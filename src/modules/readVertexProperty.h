@@ -80,8 +80,8 @@ public:
   ReadVertexProperty(Memory* dram, std::list<uint64_t>* apply, Utility::Graph<v_t, e_t>* graph, std::string name, uint64_t id);
   ~ReadVertexProperty();
 
-  void tick(void);
-  void reset(void);
+  void tick(void) override;
+  void reset(void) override;
 };
 
 } // namespace SimObj

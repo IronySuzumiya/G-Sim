@@ -18,7 +18,6 @@
 #include <time.h>
 
 #include "cacheLine.h"
-#include "prefetch.h"
 #include "log.h"
 
 namespace SimObj {
@@ -40,10 +39,12 @@ private:
 
   std::vector<CacheLine> cache;
   std::list<mshr_t> mshr;
+  //std::list<uint64_t> conflict_insert_queue;
+  //uint64_t conflict_insert_queue_max_len;
 
   std::list<std::pair<uint64_t, bool*>> outstanding_sequential_reads;
   // Address, Accessed this Cycle, Prefetch Issued
-  std::map<uint64_t, std::pair<bool, bool>> prefetched;
+  //std::map<uint64_t, std::pair<bool, bool>> prefetched;
 
   Memory* _dram;
 
@@ -79,15 +80,15 @@ public:
   Cache(uint64_t entries, uint64_t entry_size, uint64_t num_set_associative_way, Memory* dram);
   ~Cache();
   
-  void tick(void);
-  void write(uint64_t addr, bool* complete, bool sequential=true);
-  void read(uint64_t addr, bool* complete, bool sequential=true);
-  void alloc(uint64_t addr, bool* complete);
+  void tick(void) override;
+  void write(uint64_t addr, bool* complete, bool sequential=true) override;
+  void read(uint64_t addr, bool* complete, bool sequential=true) override;
+  void alloc(uint64_t addr, bool* complete) override;
+  void prefetch(uint64_t addr, bool* complete) override;
 
-  void print_stats();
-  void print_stats_csv();
-  void print_stats_without_name();
-  void reset();
+  void print_stats() override;
+  void print_stats_csv() override;
+  void reset() override;
 }; // class Cache
 
 }; // namespace SimObj

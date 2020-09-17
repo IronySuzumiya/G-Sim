@@ -75,11 +75,11 @@ private:
 
 public:
   bool _mem_flag;
-  WriteVertexProperty(Memory* dram, std::list<uint64_t>* process, Utility::Graph<v_t, e_t>* graph, uint64_t base_addr, std::string name, uint64_t id);
+  WriteVertexProperty(Memory* dram, std::list<uint64_t>* process, Utility::Graph<v_t, e_t>* graph, std::string name, uint64_t id);
   ~WriteVertexProperty();
 
-  void tick(void);
-  void reset(void);
+  void tick(void) override;
+  void reset(void) override;
 
   //void print_stats(void);
   //void print_stats_csv(void);
